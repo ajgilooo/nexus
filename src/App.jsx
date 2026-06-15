@@ -1,9 +1,10 @@
 // src/App.jsx
 import { useState, useEffect, useRef } from 'react';
-import { useApp } from './state/appStore.jsx';
+import { useApp } from './state/appStore.js';
 import { Store, setToken } from './lib/storage.js';
 import MediWorld from './components/medi/MediWorld.jsx';
 import KinetixWorld from './components/kinetix/KinetixWorld.jsx';
+import TodayWorld from './components/today/TodayWorld.jsx';
 
 function SyncChip({ status, onOpen }) {
   const labels = {
@@ -98,6 +99,13 @@ function SettingsPopover({ onClose, doc, commit }) {
 export default function App() {
   const { doc, commit, setWorld, syncStatus, loading } = useApp();
   const [showSettings, setShowSettings] = useState(false);
+  // Deep-link target set by the Today command center: { world, tab }
+  const [navTarget, setNavTarget] = useState(null);
+
+  function navigateTo(targetWorld, tab) {
+    setNavTarget({ world: targetWorld, tab, ts: Date.now() });
+    setWorld(targetWorld);
+  }
 
   if (loading) {
     return (
@@ -108,7 +116,7 @@ export default function App() {
     );
   }
 
-  const world = doc.ui?.activeWorld || 'medi';
+  const world = doc.ui?.activeWorld || 'today';
 
   return (
     <div className="app-root" data-world={world}>
@@ -117,6 +125,12 @@ export default function App() {
         <div className="topbar-brand">NEXUS</div>
 
         <div className="world-toggle">
+          <button
+            className={`wt-btn ${world === 'today' ? 'wt-active' : ''}`}
+            onClick={() => setWorld('today')}
+          >
+            TODAY
+          </button>
           <button
             className={`wt-btn ${world === 'medi' ? 'wt-active' : ''}`}
             onClick={() => setWorld('medi')}
@@ -136,10 +150,9 @@ export default function App() {
 
       {/* ── World body ───────────────────────────────────────────────────── */}
       <main className="world-body">
-        {world === 'medi'
-          ? <MediWorld doc={doc} commit={commit} />
-          : <KinetixWorld doc={doc} commit={commit} />
-        }
+        {world === 'today' && <TodayWorld doc={doc} commit={commit} onNavigate={navigateTo} />}
+        {world === 'medi' && <MediWorld doc={doc} commit={commit} navTarget={navTarget?.world === 'medi' ? navTarget : null} />}
+        {world === 'kinetix' && <KinetixWorld doc={doc} commit={commit} navTarget={navTarget?.world === 'kinetix' ? navTarget : null} />}
       </main>
 
       {showSettings && (

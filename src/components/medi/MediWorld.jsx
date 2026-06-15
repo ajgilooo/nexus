@@ -10,9 +10,16 @@ const TABS = [
   { id: 'ple',       label: 'PLE Intelligence' },
 ];
 
-export default function MediWorld({ doc, commit }) {
+export default function MediWorld({ doc, commit, navTarget }) {
   const [tab, setTab] = useState('tracker');
   const [tick, setTick] = useState(0);
+
+  // Respond to deep-link from the Today command center
+  useEffect(() => {
+    if (navTarget?.tab && TABS.some(t => t.id === navTarget.tab)) {
+      setTab(navTarget.tab);
+    }
+  }, [navTarget?.ts]);
 
   // 60s tick for countdown + phase updates (§4.12)
   useEffect(() => {

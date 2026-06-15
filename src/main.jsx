@@ -1,7 +1,7 @@
 // src/main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { AppProvider } from './state/appStore.jsx';
+import { AppProvider } from './state/appStore.js';
 import App from './App.jsx';
 import './index.css';
 

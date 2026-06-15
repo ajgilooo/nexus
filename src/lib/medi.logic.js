@@ -63,6 +63,7 @@ export function freshState() {
     },
     dailyHistory: {},
     questionLogs: [],
+    examLog: [],
     modules,
     pipeline
   };
@@ -108,6 +109,14 @@ export function globalStats(state) {
     if (typeof s.userPerformanceScore === 'number') {
       const w = completedCapped || m.totalQuestions;
       scoreWeightSum += s.userPerformanceScore * w;
+      scoreWeightTotal += w;
+    }
+  }
+  // Blend rotation exam scores into overall mastery, item-weighted like questions.
+  for (const e of (state.examLog || [])) {
+    if (typeof e.score === 'number') {
+      const w = (typeof e.total === 'number' && e.total > 0) ? e.total : 100;
+      scoreWeightSum += e.score * w;
       scoreWeightTotal += w;
     }
   }
@@ -313,22 +322,70 @@ export function calcStreak(state) {
 }
 
 // ── PLE Intelligence ──────────────────────────────────────────────────────────
+// Returns exams logged for a given PLE subject (newest first not guaranteed here).
+export function examsForSubject(state, subject) {
+  const log = state.examLog || [];
+  return log.filter(e => e.subject === subject);
+}
+
 export function getSubjectCoverage(state, subject) {
   const ids = SUBJ_MODULE_IDS[subject];
-  if (!ids || !ids.length) return null;
+  const exams = examsForSubject(state, subject);
+  const hasModules = ids && ids.length;
+
+  // If a subject has neither mapped modules nor any logged exams, it's untracked.
+  if (!hasModules && exams.length === 0) return null;
+
   let done = 0, total = 0, sw = 0, swt = 0;
-  for (const m of CATALOG) {
-    if (!ids.includes(m.id)) continue;
-    const s = state.modules[m.id];
-    const cap = Math.min(Math.max(0, s.completedQuestions || 0), m.totalQuestions);
-    total += m.totalQuestions;
-    done += cap;
-    if (typeof s.userPerformanceScore === 'number') {
-      sw += s.userPerformanceScore * cap;
-      swt += cap;
+  if (hasModules) {
+    for (const m of CATALOG) {
+      if (!ids.includes(m.id)) continue;
+      const s = state.modules[m.id];
+      const cap = Math.min(Math.max(0, s.completedQuestions || 0), m.totalQuestions);
+      total += m.totalQuestions;
+      done += cap;
+      if (typeof s.userPerformanceScore === 'number') {
+        sw += s.userPerformanceScore * cap;
+        swt += cap;
+      }
     }
   }
-  return { coverage: total ? done / total * 100 : 0, avgScore: swt ? sw / swt : null, done, total };
+
+  // Blend rotation exam scores into the subject's average. Each exam is weighted by
+  // its item count (default 100 if unknown) so a 200-item finals counts more than a
+  // 20-item quiz, on the same footing as QBank questions answered.
+  let examItems = 0;
+  for (const e of exams) {
+    if (typeof e.score === 'number') {
+      const w = (typeof e.total === 'number' && e.total > 0) ? e.total : 100;
+      sw += e.score * w;
+      swt += w;
+      examItems += w;
+    }
+  }
+
+  // Coverage credit from exams: a logged exam demonstrates real exposure to the
+  // subject even where no QBank module is mapped. Give each exam item the same
+  // weight as a catalog question, capped so exams alone can reach 100% coverage.
+  const moduleCoverage = total ? done / total * 100 : 0;
+  let coverage;
+  if (!hasModules) {
+    // Exam-only subject: coverage scales with cumulative exam items, saturating at
+    // ~300 items (≈3 full exams) = 100%.
+    coverage = Math.min(100, examItems / 300 * 100);
+  } else {
+    // Module-backed subject: exams nudge coverage upward but modules dominate.
+    const examBoost = Math.min(15, examItems / 300 * 15); // up to +15 pts
+    coverage = Math.min(100, moduleCoverage + (examItems > 0 ? examBoost : 0));
+  }
+
+  return {
+    coverage,
+    avgScore: swt ? sw / swt : null,
+    done,
+    total,
+    examCount: exams.length
+  };
 }
 
 export function gapScore(pleWeight, coverage, avgScore) {
@@ -404,4 +461,49 @@ export function parseSyllabus(raw, existingChecked = {}) {
     if (existingChecked[t.id]) checked[t.id] = true;
   }
   return { topics, checked };
+}
+
+// ── Rotation Exams ─────────────────────────────────────────────────────────────
+// Exams are stored in state.examLog = [{ id, name, subject, score, total, correct, date }]
+// score is a 0–100 percentage. total/correct are optional raw item counts.
+
+export function addExam(state, exam) {
+  if (!Array.isArray(state.examLog)) state.examLog = [];
+  const entry = {
+    id: Date.now(),
+    name: exam.name || 'Exam',
+    subject: exam.subject,
+    score: Math.max(0, Math.min(100, Number(exam.score))),
+    total: (exam.total != null && exam.total !== '') ? Math.max(1, Math.round(Number(exam.total))) : null,
+    correct: (exam.correct != null && exam.correct !== '') ? Math.max(0, Math.round(Number(exam.correct))) : null,
+    date: exam.date || todayKey()
+  };
+  state.examLog.push(entry);
+  return state;
+}
+
+export function deleteExam(state, id) {
+  state.examLog = (state.examLog || []).filter(e => e.id !== id);
+  return state;
+}
+
+// Overall exam average (item-weighted), and per-subject summary for the exams panel.
+export function examStats(state) {
+  const log = state.examLog || [];
+  let sum = 0, wt = 0;
+  const bySubject = {};
+  for (const e of log) {
+    if (typeof e.score !== 'number') continue;
+    const w = (typeof e.total === 'number' && e.total > 0) ? e.total : 100;
+    sum += e.score * w; wt += w;
+    if (!bySubject[e.subject]) bySubject[e.subject] = { count: 0, sum: 0, wt: 0, latest: e };
+    const b = bySubject[e.subject];
+    b.count++; b.sum += e.score * w; b.wt += w;
+    if (e.date >= b.latest.date) b.latest = e;
+  }
+  return {
+    count: log.length,
+    avg: wt ? sum / wt : null,
+    bySubject
+  };
 }

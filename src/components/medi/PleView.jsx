@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { PLE_WEIGHTS, SUBJ_MODULE_IDS } from '../../lib/medi.data.js';
 import {
-  getSubjectCoverage, gapScore, calcReadiness, parseSyllabus
+  getSubjectCoverage, gapScore, calcReadiness, parseSyllabus,
+  addExam, deleteExam, examStats
 } from '../../lib/medi.logic.js';
 import { ReadinessRing } from './AnalyticsView.jsx';
 
@@ -371,10 +372,156 @@ function WardCaseLog({ doc, commit }) {
   );
 }
 
+// ── ROTATION EXAMS ────────────────────────────────────────────────────────────
+function RotationExams({ doc, commit }) {
+  const state = doc.medi.state;
+  const examLog = state.examLog || [];
+  const [name, setName] = useState('');
+  const [subject, setSubject] = useState(PLE_SUBJECTS[0]);
+  const [scoreMode, setScoreMode] = useState('percent'); // 'percent' | 'raw'
+  const [score, setScore] = useState('');
+  const [correct, setCorrect] = useState('');
+  const [total, setTotal] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [filterSubj, setFilterSubj] = useState('All');
+  const [error, setError] = useState('');
+
+  const stats = examStats(state);
+
+  function handleAdd() {
+    setError('');
+    if (!name.trim()) { setError('Give the exam a name.'); return; }
+    let finalScore, finalTotal = null, finalCorrect = null;
+    if (scoreMode === 'raw') {
+      const c = Number(correct), t = Number(total);
+      if (!t || t < 1 || isNaN(t) || isNaN(c)) { setError('Enter valid correct / total counts.'); return; }
+      if (c > t) { setError('Correct cannot exceed total.'); return; }
+      finalScore = c / t * 100;
+      finalCorrect = c; finalTotal = t;
+    } else {
+      const s = Number(score);
+      if (isNaN(s) || s < 0 || s > 100) { setError('Enter a score between 0 and 100.'); return; }
+      finalScore = s;
+      if (total !== '' && Number(total) > 0) finalTotal = Number(total);
+    }
+    const next = { ...doc, medi: { ...doc.medi, state: { ...state, examLog: [...examLog] } } };
+    addExam(next.medi.state, { name: name.trim(), subject, score: finalScore, total: finalTotal, correct: finalCorrect, date });
+    commit(next);
+    setName(''); setScore(''); setCorrect(''); setTotal('');
+  }
+
+  function handleDelete(id) {
+    const next = { ...doc, medi: { ...doc.medi, state: { ...state, examLog: examLog.filter(e => e.id !== id) } } };
+    commit(next);
+  }
+
+  const subjs = ['All', ...PLE_SUBJECTS];
+  const filtered = filterSubj === 'All' ? examLog : examLog.filter(e => e.subject === filterSubj);
+  const sorted = [...filtered].sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
+
+  const scoreColor = v => v >= 75 ? '#10B981' : v >= 60 ? '#F59E0B' : '#EF4444';
+
+  return (
+    <div>
+      <div style={{ marginBottom: 14, fontSize: '0.78rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+        Log your school's in-rotation exams. Scores feed directly into subject coverage, mastery, readiness and weak-zones — item-weighted alongside your QBank work.
+      </div>
+
+      {/* Summary cards */}
+      <div className="exam-summary">
+        <div className="exam-summary-card">
+          <div className="exam-summary-label">Exams Logged</div>
+          <div className="exam-summary-value">{stats.count}</div>
+        </div>
+        <div className="exam-summary-card">
+          <div className="exam-summary-label">Weighted Average</div>
+          <div className="exam-summary-value" style={{ color: stats.avg !== null ? scoreColor(stats.avg) : 'var(--muted)' }}>
+            {stats.avg !== null ? stats.avg.toFixed(1) + '%' : '—'}
+          </div>
+        </div>
+        <div className="exam-summary-card">
+          <div className="exam-summary-label">Subjects Covered</div>
+          <div className="exam-summary-value">{Object.keys(stats.bySubject).length} / {PLE_SUBJECTS.length}</div>
+        </div>
+      </div>
+
+      <div className="cases-layout">
+        {/* Form */}
+        <div className="case-form">
+          <div className="section-title">Log Rotation Exam</div>
+          <input type="text" placeholder="Exam name (e.g. IM Shifting Exam 2)" value={name} onChange={e => setName(e.target.value)} />
+          <select value={subject} onChange={e => setSubject(e.target.value)}>
+            {PLE_SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+
+          <div className="exam-mode-toggle">
+            <button className={`exam-mode-btn ${scoreMode === 'percent' ? 'active' : ''}`} onClick={() => setScoreMode('percent')}>Percentage</button>
+            <button className={`exam-mode-btn ${scoreMode === 'raw' ? 'active' : ''}`} onClick={() => setScoreMode('raw')}>Correct / Total</button>
+          </div>
+
+          {scoreMode === 'percent' ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="number" min="0" max="100" step="0.1" inputMode="numeric" placeholder="Score %" value={score} onChange={e => setScore(e.target.value)} />
+              <input type="number" min="1" inputMode="numeric" placeholder="Items (optional)" value={total} onChange={e => setTotal(e.target.value)} />
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="number" min="0" inputMode="numeric" placeholder="Correct" value={correct} onChange={e => setCorrect(e.target.value)} />
+              <input type="number" min="1" inputMode="numeric" placeholder="Total items" value={total} onChange={e => setTotal(e.target.value)} />
+            </div>
+          )}
+
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          {error && <div style={{ color: '#EF4444', fontSize: '0.75rem' }}>{error}</div>}
+          <button className="btn-accent" onClick={handleAdd}>Log Exam</button>
+        </div>
+
+        {/* Feed */}
+        <div>
+          <div className="case-feed-header">
+            <span className="section-title" style={{ marginBottom: 0 }}>
+              {examLog.length} exam{examLog.length !== 1 ? 's' : ''} logged
+            </span>
+          </div>
+          <div className="case-filter-chips">
+            {subjs.map(s => (
+              <button key={s} className={`case-chip ${filterSubj === s ? 'active' : ''}`} onClick={() => setFilterSubj(s)}>
+                {s === 'All' ? 'All' : s.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+
+          {sorted.length === 0 && (
+            <div className="empty-state">No exams yet. Log your first rotation exam on the left.</div>
+          )}
+
+          {sorted.map(e => (
+            <div key={e.id} className="exam-entry">
+              <div className="exam-entry-main">
+                <div className="exam-entry-score" style={{ color: scoreColor(e.score) }}>{e.score.toFixed(0)}<span>%</span></div>
+                <div className="exam-entry-body">
+                  <div className="exam-entry-name">{e.name}</div>
+                  <div className="exam-entry-meta">
+                    <span className="exam-tag-subj">{e.subject}</span>
+                    {e.total != null && <span className="exam-raw">{e.correct != null ? `${e.correct}/${e.total}` : `${e.total} items`}</span>}
+                    <span className="exam-date">{e.date}</span>
+                  </div>
+                </div>
+              </div>
+              <button className="case-del" onClick={() => handleDelete(e.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── PLE VIEW ──────────────────────────────────────────────────────────────────
 const SUBTABS = [
   { id: 'gap',       label: 'Gap Analysis'     },
   { id: 'readiness', label: 'PLE Readiness'    },
+  { id: 'exams',     label: 'Rotation Exams'   },
   { id: 'syllabus',  label: 'Syllabus Tracker' },
   { id: 'cases',     label: 'Ward Case Log'    },
 ];
@@ -398,6 +545,7 @@ export default function PleView({ doc, commit }) {
       <div className="ple-panel">
         {tab === 'gap'       && <GapAnalysis state={doc.medi.state} />}
         {tab === 'readiness' && <Top5Readiness state={doc.medi.state} />}
+        {tab === 'exams'     && <RotationExams doc={doc} commit={commit} />}
         {tab === 'syllabus'  && <SyllabusTracker doc={doc} commit={commit} />}
         {tab === 'cases'     && <WardCaseLog doc={doc} commit={commit} />}
       </div>

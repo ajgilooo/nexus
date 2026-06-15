@@ -1,5 +1,5 @@
 // src/components/kinetix/KinetixWorld.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SeasonStrip from './SeasonStrip.jsx';
 import PlanTab from './PlanTab.jsx';
 import PacesTab from './PacesTab.jsx';
@@ -15,8 +15,14 @@ const TABS = [
   { id: 'status',   label: 'Status'   },
 ];
 
-export default function KinetixWorld({ doc, commit }) {
+export default function KinetixWorld({ doc, commit, navTarget }) {
   const [tab, setTab] = useState('plan');
+
+  useEffect(() => {
+    if (navTarget?.tab && TABS.some(t => t.id === navTarget.tab)) {
+      setTab(navTarget.tab);
+    }
+  }, [navTarget?.ts]);
 
   return (
     <div style={{ overflowY: 'auto', flex: 1 }}>

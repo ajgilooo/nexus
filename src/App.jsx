@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState, useEffect, useRef } from 'react';
-import { useApp } from './state/appStore.js';
+import { useApp } from './state/appStore.jsx';
 import { Store, setToken } from './lib/storage.js';
 import MediWorld from './components/medi/MediWorld.jsx';
 import KinetixWorld from './components/kinetix/KinetixWorld.jsx';

@@ -1,4 +1,4 @@
-// src/state/appStore.jsx
+// src/state/appStore.js
 // Central state management. Single in-memory unified doc + React context.
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
@@ -12,7 +12,7 @@ const USER_ID = 'joseph';
 function defaultDoc() {
   return {
     schemaVersion: 3,
-    ui: { activeWorld: 'medi' },
+    ui: { activeWorld: 'today' },
     medi: {
       state: freshState(),
       sylState: { topics: [], checked: {} },
@@ -33,7 +33,7 @@ function migrate(raw) {
   const doc = { ...def, ...raw };
   doc.schemaVersion = 3;
 
-  doc.ui = { activeWorld: 'medi', ...(raw.ui || {}) };
+  doc.ui = { activeWorld: 'today', ...(raw.ui || {}) };
 
   doc.medi = { ...def.medi, ...(raw.medi || {}) };
   if (!doc.medi.state) {
@@ -49,6 +49,11 @@ function migrate(raw) {
   }
   if (!doc.medi.sylState) doc.medi.sylState = { topics: [], checked: {} };
   if (!doc.medi.caseLog) doc.medi.caseLog = [];
+  // examLog lives inside state; carry over any legacy medi.examLog placement.
+  if (!Array.isArray(doc.medi.state.examLog)) {
+    doc.medi.state.examLog = Array.isArray(doc.medi.examLog) ? doc.medi.examLog : [];
+  }
+  delete doc.medi.examLog;
 
   doc.kinetix = { ...def.kinetix, ...(raw.kinetix || {}) };
   if (!doc.kinetix.checks) doc.kinetix.checks = {};

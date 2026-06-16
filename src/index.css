@@ -1031,3 +1031,149 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .ycal-day.today { box-shadow: 0 0 0 1.5px var(--accent); }
 
 .year-cal-foot { font-size: 0.68rem; color: var(--muted); margin-top: 14px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CHARACTER TAB — 2-column laptop layout
+   ══════════════════════════════════════════════════════════════════════════ */
+.char-tab-root {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 14px;
+  padding: 14px 16px 40px;
+  height: calc(100vh - var(--topbar-h) - var(--tabbar-h));
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.char-left {
+  display: flex; flex-direction: column; gap: 12px;
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+.char-right {
+  display: flex; flex-direction: column; gap: 12px;
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+.char-header-card { padding: 14px 16px; }
+
+/* Badges — tighter 2-col grid in the right column */
+.char-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.char-badge {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--line);
+  border-radius: 8px; padding: 9px 11px;
+  opacity: 0.45; transition: all 0.2s;
+}
+.char-badge-unlocked {
+  background: rgba(45,212,167,0.05);
+  border-color: rgba(45,212,167,0.22);
+  opacity: 1;
+}
+.char-badge-name {
+  font-size: 0.76rem; font-weight: 800;
+  color: var(--muted); margin-bottom: 3px;
+}
+.char-badge-unlocked .char-badge-name { color: var(--accent); }
+.char-badge-desc { font-size: 0.65rem; color: var(--muted); line-height: 1.35; }
+.char-badge-date {
+  font-size: 0.6rem; color: var(--accent);
+  font-family: var(--font-mono); margin-top: 4px;
+}
+
+/* Shop — tight 2-col or 3-col auto grid */
+.char-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.char-shop-item {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 11px 12px;
+  display: flex; flex-direction: column;
+  transition: border-color 0.2s;
+}
+.char-shop-item:hover { border-color: rgba(255,255,255,0.12); }
+
+/* Collapse to single column on smaller screens */
+@media (max-width: 860px) {
+  .char-tab-root {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+  .char-left, .char-right { overflow-y: visible; }
+  .char-badges-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+  .char-badges-grid { grid-template-columns: repeat(2, 1fr); }
+  .char-tab-root { padding: 12px 12px 40px; }
+}
+
+/* Kinetix world: char tab lives inside kx-world which already scrolls */
+.kx-world .char-tab-root {
+  height: auto; overflow: visible;
+}
+.kx-world .char-left,
+.kx-world .char-right { overflow-y: visible; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RPG — XP STRIP & POPOVER (top bar)
+   ══════════════════════════════════════════════════════════════════════════ */
+.xp-strip {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px; border-radius: 20px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer; transition: all 0.2s; min-height: 28px;
+}
+.xp-strip:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.07); }
+
+.xp-lv {
+  font-size: 0.72rem; font-weight: 900; font-family: var(--font-mono);
+  color: var(--accent); white-space: nowrap; letter-spacing: 0.03em;
+}
+.xp-bar-wrap {
+  width: 56px; height: 5px; background: rgba(255,255,255,0.1);
+  border-radius: 3px; overflow: hidden; flex-shrink: 0;
+}
+.xp-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  border-radius: 3px; transition: width 0.5s ease;
+}
+.xp-coins {
+  font-size: 0.7rem; font-weight: 700; font-family: var(--font-mono);
+  color: var(--text); white-space: nowrap;
+}
+
+/* Collapse bar on small screens */
+@media (max-width: 480px) {
+  .xp-bar-wrap { display: none; }
+  .xp-strip { padding: 4px 8px; gap: 5px; }
+  .xp-lv, .xp-coins { font-size: 0.66rem; }
+}
+
+.xp-popover-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: transparent;
+  display: flex; align-items: flex-start; justify-content: flex-end;
+  padding: calc(var(--topbar-h) + 8px) 16px 0;
+  pointer-events: none;
+}
+.xp-popover {
+  width: 260px; max-width: calc(100vw - 32px);
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  pointer-events: all;
+}
+.xp-popover-backdrop { pointer-events: all; }
+.xp-pop-header { display: flex; justify-content: space-between; align-items: flex-start; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RPG — WORLD ACCENT OVERRIDES (§10.1.2)
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-world="medi"]    { --accent: #10B981; --accent-dim: #0f7a5a; }
+[data-world="kinetix"] { --accent: #2DD4A7; --accent-dim: #1c7c64; }
+[data-world="today"]   { --accent: #10B981; --accent-dim: #0f7a5a; }

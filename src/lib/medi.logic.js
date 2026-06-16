@@ -395,11 +395,9 @@ export function gapScore(pleWeight, coverage, avgScore) {
   return pleWeight > 0 ? Math.min(100, (rawGap / pleWeight) * 100) : 0;
 }
 
-export function calcReadiness(state) {
+export function calcReadiness(state, rotationExams = []) {
   const g = globalStats(state);
   // C1 Coverage across all 12 equal-weight PLE subjects (0–35).
-  // Each subject contributes equally (true to the real exam, where every subject
-  // is one 100-item block). Subjects with no tracked modules count as 0% coverage.
   let covScore = 0;
   const n = PLE_WEIGHTS.length; // 12
   PLE_WEIGHTS.forEach(p => {
@@ -418,13 +416,33 @@ export function calcReadiness(state) {
   const simMods = CATALOG.filter(m => m.name.includes("Self Assessment Simulation"));
   const simDone = simMods.filter(m => state.modules[m.id].status === "Completed").length;
   const simScore = simMods.length ? (simDone / simMods.length) * 15 : 0;
-  const total = covScore + scoreComponent + retentionScore + simScore;
+
+  // C5 Rotation exams (§10.8.3) — only activates when ≥1 exam exists
+  const exs = rotationExams || [];
+  const hasExams = exs.length > 0;
+  let simComponent = simScore;
+  let rotComponent = 0;
+  if (hasExams) {
+    const clampPct = (s, m) => {
+      const mv = Number(m), sv = Number(s);
+      if (!isFinite(mv) || mv <= 0 || !isFinite(sv)) return 0;
+      return Math.max(0, Math.min(100, (sv / mv) * 100));
+    };
+    const avgPct = exs.reduce((a, e) => a + clampPct(e.score, e.maxScore), 0) / exs.length;
+    const c5raw = (avgPct / 100) * 15;
+    simComponent = simScore * 0.6;
+    rotComponent = c5raw * 0.4;
+  }
+
+  const total = Math.min(100, covScore + scoreComponent + retentionScore + simComponent + rotComponent);
   return {
-    total: Math.min(100, total),
+    total,
     coverage: covScore,
     scoreComponent,
     retention: retentionScore,
-    simulation: simScore,
+    simulation: simComponent,
+    rotation: rotComponent,
+    hasExams,
     decayCount,
     mastery
   };

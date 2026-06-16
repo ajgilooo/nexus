@@ -6,6 +6,7 @@ import {
   addExam, deleteExam, examStats
 } from '../../lib/medi.logic.js';
 import { ReadinessRing } from './AnalyticsView.jsx';
+import RotationExamsPanel from './RotationExamsPanel.jsx';
 
 const PLE_SUBJECTS = PLE_WEIGHTS.map(p => p.subject);
 const CASE_SUBJECTS = [
@@ -80,8 +81,10 @@ function GapAnalysis({ state }) {
 }
 
 // ── PLE READINESS ─────────────────────────────────────────────────────────────
-function Top5Readiness({ state }) {
-  const r = calcReadiness(state);
+function Top5Readiness({ doc }) {
+  const state = doc.medi.state;
+  const rotationExams = doc.medi.rotationExams || [];
+  const r = calcReadiness(state, rotationExams);
 
   const legend = [
     { range: '90–100', text: 'Peak — maintain weekly touch for each subject, shift time to weak gaps' },
@@ -91,33 +94,45 @@ function Top5Readiness({ state }) {
     { range: '0–39',   text: 'Foundation — start with Step 1 USMLE + uWorld core; volume before quality' },
   ];
 
+  const simMax = r.hasExams ? 9 : 15;
+  const components = [
+    { label: 'Coverage×PLE (35 pts)', val: r.coverage.toFixed(1), max: 35, color: '#3b82f6' },
+    { label: 'Score floor (30 pts)', val: r.scoreComponent.toFixed(1), max: 30, color: '#10B981' },
+    { label: 'Retention (20 pts)', val: r.retention.toFixed(1), max: 20, color: '#F59E0B' },
+    { label: `Simulation (${simMax} pts)`, val: r.simulation.toFixed(1), max: simMax, color: '#a78bfa' },
+    ...(r.hasExams ? [{ label: 'Rotation exams (6 pts)', val: r.rotation.toFixed(1), max: 6, color: 'var(--accent)' }] : []),
+  ];
+
   return (
     <div>
       <div className="readiness-cards" style={{ marginBottom: 20 }}>
         <div className="an-panel">
           <div className="an-panel-title">Overall Readiness Score</div>
-          <ReadinessRing state={state} size={140} />
+          <ReadinessRing state={state} rotationExams={rotationExams} size={140} />
         </div>
         <div className="an-panel">
           <div className="an-panel-title">Component Breakdown</div>
-          {[
-            { label: 'Coverage (35 pts)', val: r.coverage.toFixed(1), max: 35 },
-            { label: 'Avg Score (30 pts)', val: r.scoreComponent.toFixed(1), max: 30 },
-            { label: 'Retention (20 pts)', val: r.retention.toFixed(1), max: 20 },
-            { label: 'Simulation (15 pts)', val: r.simulation.toFixed(1), max: 15 },
-          ].map(c => (
+          {components.map(c => (
             <div key={c.label} style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>{c.label}</span>
                 <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'var(--text)' }}>{c.val} / {c.max}</span>
               </div>
               <div className="progress-bar-wrap">
-                <div className="progress-bar-fill" style={{ width: (Number(c.val) / c.max * 100) + '%' }} />
+                <div className="progress-bar-fill" style={{ width: (Number(c.val) / c.max * 100) + '%', background: c.color || undefined }} />
               </div>
             </div>
           ))}
           <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 8 }}>
             Decay penalty: {r.decayCount} module(s) stale &gt;30 days
+            {r.hasExams && (
+              <span style={{ marginLeft: 10, color: 'var(--accent)' }}>
+                · {rotationExams.length} rotation exam{rotationExams.length !== 1 ? 's' : ''} · avg {(rotationExams.reduce((a, e) => {
+                  const m = Number(e.maxScore), s = Number(e.score);
+                  return a + (isFinite(m) && m > 0 ? Math.max(0, Math.min(100, s / m * 100)) : 0);
+                }, 0) / rotationExams.length).toFixed(0)}%
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -521,9 +536,9 @@ function RotationExams({ doc, commit }) {
 const SUBTABS = [
   { id: 'gap',       label: 'Gap Analysis'     },
   { id: 'readiness', label: 'PLE Readiness'    },
-  { id: 'exams',     label: 'Rotation Exams'   },
   { id: 'syllabus',  label: 'Syllabus Tracker' },
   { id: 'cases',     label: 'Ward Case Log'    },
+  { id: 'exams',     label: 'Rotation Exams'   },
 ];
 
 export default function PleView({ doc, commit }) {
@@ -544,10 +559,10 @@ export default function PleView({ doc, commit }) {
       </div>
       <div className="ple-panel">
         {tab === 'gap'       && <GapAnalysis state={doc.medi.state} />}
-        {tab === 'readiness' && <Top5Readiness state={doc.medi.state} />}
-        {tab === 'exams'     && <RotationExams doc={doc} commit={commit} />}
+        {tab === 'readiness' && <Top5Readiness doc={doc} />}
         {tab === 'syllabus'  && <SyllabusTracker doc={doc} commit={commit} />}
         {tab === 'cases'     && <WardCaseLog doc={doc} commit={commit} />}
+        {tab === 'exams'     && <RotationExamsPanel doc={doc} commit={commit} />}
       </div>
     </div>
   );

@@ -14,14 +14,14 @@ function colorBar(v) {
 }
 
 // ── KPI Cards ────────────────────────────────────────────────────────────────
-function KPIs({ state }) {
+function KPIs({ state, rotationExams }) {
   const g = globalStats(state);
   const { avg7, avg30 } = velocityStats(state);
   const { needed } = projectionStats(state);
   const streak = calcStreak(state);
   const wz = weakZones(state);
   const thr = weakThreshold();
-  const readiness = calcReadiness(state);
+  const readiness = calcReadiness(state, rotationExams);
   const days = daysToExam();
   const activeDays = Object.keys(state.dailyHistory).length;
 
@@ -225,14 +225,19 @@ function Sparklines({ state }) {
 }
 
 // ── Readiness Ring ───────────────────────────────────────────────────────────
-export function ReadinessRing({ state, size = 120 }) {
-  const r = calcReadiness(state);
+export function ReadinessRing({ state, rotationExams = [], size = 120 }) {
+  const r = calcReadiness(state, rotationExams);
   const circ = 2 * Math.PI * 54;
-  const dash = circ * r.total / 100;
   const color = r.total >= 80 ? '#10B981' : r.total >= 60 ? '#F59E0B' : '#EF4444';
-  const cx = size / 2; const cy = size / 2; const radius = size * 0.45;
-  const c2 = 2 * Math.PI * radius;
-  const d2 = c2 * r.total / 100;
+
+  const simMax = r.hasExams ? 9 : 15;
+  const bars = [
+    { label: 'Coverage', val: r.coverage, max: 35, color: '#3b82f6' },
+    { label: 'Score',    val: r.scoreComponent, max: 30, color: '#10B981' },
+    { label: 'Retention',val: r.retention, max: 20, color: '#F59E0B' },
+    { label: `Sim (${simMax})`, val: r.simulation, max: simMax, color: '#a78bfa' },
+    ...(r.hasExams ? [{ label: 'Rotation (6)', val: r.rotation, max: 6, color: 'var(--accent)' }] : []),
+  ];
 
   return (
     <div className="readiness-ring-wrap">
@@ -250,12 +255,7 @@ export function ReadinessRing({ state, size = 120 }) {
       </svg>
 
       <div className="ring-breakdown">
-        {[
-          { label: 'Coverage (12 subj)', val: r.coverage, max: 35, color: '#3b82f6' },
-          { label: 'Score (85% floor)', val: r.scoreComponent, max: 30, color: '#10B981' },
-          { label: 'Retention', val: r.retention, max: 20, color: '#F59E0B' },
-          { label: 'Simulation', val: r.simulation, max: 15, color: '#a78bfa' },
-        ].map(rb => (
+        {bars.map(rb => (
           <div key={rb.label} className="rb-row">
             <span className="rb-label">{rb.label}</span>
             <div className="rb-bar-wrap">
@@ -264,7 +264,7 @@ export function ReadinessRing({ state, size = 120 }) {
             <span className="rb-val">{rb.val.toFixed(1)}</span>
           </div>
         ))}
-        <div className="rb-decay">Decay penalties: {calcReadiness(state).decayCount} module(s) &gt;30 days stale</div>
+        <div className="rb-decay">Decay penalties: {r.decayCount} module(s) &gt;30 days stale</div>
       </div>
     </div>
   );
@@ -273,6 +273,7 @@ export function ReadinessRing({ state, size = 120 }) {
 // ── Analytics View ───────────────────────────────────────────────────────────
 export default function AnalyticsView({ doc }) {
   const state = doc.medi.state;
+  const rotationExams = doc.medi.rotationExams || [];
   const { avg7, avg30 } = velocityStats(state);
   const { needed, projDate } = projectionStats(state);
   const g = globalStats(state);
@@ -300,7 +301,7 @@ export default function AnalyticsView({ doc }) {
 
   return (
     <div className="analytics-view">
-      <KPIs state={state} />
+      <KPIs state={state} rotationExams={rotationExams} />
 
       {/* Heatmap + Radar */}
       <div className="an-cols">
@@ -404,7 +405,7 @@ export default function AnalyticsView({ doc }) {
 
         <div className="an-panel">
           <div className="an-panel-title">PLE Readiness</div>
-          <ReadinessRing state={state} />
+          <ReadinessRing state={state} rotationExams={rotationExams} />
         </div>
       </div>
     </div>

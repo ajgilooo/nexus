@@ -38,7 +38,7 @@ export function buildActionMatrix(doc) {
   const dailyDone = daily.dayKey === todayKey() ? daily.currentDayCompletedCount : 0;
   const remainingToday = Math.max(0, target - dailyDone);
   const g = globalStats(state);
-  const readiness = calcReadiness(state);
+  const readiness = calcReadiness(state, doc.medi.rotationExams || []);
   const wz = weakZones(state);
   const thr = weakThreshold();
   const decayed = CATALOG.filter(m => isDecayed(state, m.id));

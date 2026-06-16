@@ -5,6 +5,7 @@ import { Store, setToken } from './lib/storage.js';
 import MediWorld from './components/medi/MediWorld.jsx';
 import KinetixWorld from './components/kinetix/KinetixWorld.jsx';
 import TodayWorld from './components/today/TodayWorld.jsx';
+import XpStrip from './components/XpStrip.jsx';
 
 function SyncChip({ status, onOpen }) {
   const labels = {
@@ -99,12 +100,24 @@ function SettingsPopover({ onClose, doc, commit }) {
 export default function App() {
   const { doc, commit, setWorld, syncStatus, loading } = useApp();
   const [showSettings, setShowSettings] = useState(false);
-  // Deep-link target set by the Today command center: { world, tab }
   const [navTarget, setNavTarget] = useState(null);
+  // Shared Character tab — when true, both worlds open to the character tab
+  const [characterOpen, setCharacterOpen] = useState(false);
 
   function navigateTo(targetWorld, tab) {
     setNavTarget({ world: targetWorld, tab, ts: Date.now() });
     setWorld(targetWorld);
+    if (tab === 'character') setCharacterOpen(true);
+    else setCharacterOpen(false);
+  }
+
+  function openCharacter() {
+    setCharacterOpen(true);
+  }
+
+  function onTabChange(tab) {
+    if (tab !== 'character') setCharacterOpen(false);
+    else setCharacterOpen(true);
   }
 
   if (loading) {
@@ -145,14 +158,35 @@ export default function App() {
           </button>
         </div>
 
-        <SyncChip status={syncStatus} onOpen={() => setShowSettings(true)} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {doc.rpg && (
+            <XpStrip doc={doc} onOpenCharacter={openCharacter} />
+          )}
+          <SyncChip status={syncStatus} onOpen={() => setShowSettings(true)} />
+        </div>
       </header>
 
       {/* ── World body ───────────────────────────────────────────────────── */}
       <main className="world-body">
         {world === 'today' && <TodayWorld doc={doc} commit={commit} onNavigate={navigateTo} />}
-        {world === 'medi' && <MediWorld doc={doc} commit={commit} navTarget={navTarget?.world === 'medi' ? navTarget : null} />}
-        {world === 'kinetix' && <KinetixWorld doc={doc} commit={commit} navTarget={navTarget?.world === 'kinetix' ? navTarget : null} />}
+        {world === 'medi' && (
+          <MediWorld
+            doc={doc}
+            commit={commit}
+            navTarget={navTarget?.world === 'medi' ? navTarget : null}
+            characterOpen={characterOpen}
+            onTabChange={onTabChange}
+          />
+        )}
+        {world === 'kinetix' && (
+          <KinetixWorld
+            doc={doc}
+            commit={commit}
+            navTarget={navTarget?.world === 'kinetix' ? navTarget : null}
+            characterOpen={characterOpen}
+            onTabChange={onTabChange}
+          />
+        )}
       </main>
 
       {showSettings && (

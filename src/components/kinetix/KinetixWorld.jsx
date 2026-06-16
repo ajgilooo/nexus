@@ -6,16 +6,18 @@ import PacesTab from './PacesTab.jsx';
 import StrengthTab from './StrengthTab.jsx';
 import RulesTab from './RulesTab.jsx';
 import StatusTab from './StatusTab.jsx';
+import CharacterTab from '../CharacterTab.jsx';
 
 const TABS = [
-  { id: 'plan',     label: 'Plan'     },
-  { id: 'paces',    label: 'Paces'    },
-  { id: 'strength', label: 'Strength' },
-  { id: 'rules',    label: 'Rules'    },
-  { id: 'status',   label: 'Status'   },
+  { id: 'plan',      label: 'Plan'      },
+  { id: 'paces',     label: 'Paces'     },
+  { id: 'strength',  label: 'Strength'  },
+  { id: 'rules',     label: 'Rules'     },
+  { id: 'status',    label: 'Status'    },
+  { id: 'character', label: 'Character' },
 ];
 
-export default function KinetixWorld({ doc, commit, navTarget }) {
+export default function KinetixWorld({ doc, commit, navTarget, characterOpen, onTabChange }) {
   const [tab, setTab] = useState('plan');
 
   useEffect(() => {
@@ -23,6 +25,16 @@ export default function KinetixWorld({ doc, commit, navTarget }) {
       setTab(navTarget.tab);
     }
   }, [navTarget?.ts]);
+
+  // Sync shared Character tab open state
+  useEffect(() => {
+    if (characterOpen) setTab('character');
+  }, [characterOpen]);
+
+  function handleTabChange(id) {
+    setTab(id);
+    if (onTabChange) onTabChange(id);
+  }
 
   return (
     <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -44,18 +56,19 @@ export default function KinetixWorld({ doc, commit, navTarget }) {
             <button
               key={t.id}
               className={`kx-tab ${tab === t.id ? 'active' : ''}`}
-              onClick={() => setTab(t.id)}
+              onClick={() => handleTabChange(t.id)}
             >
               {t.label}
             </button>
           ))}
         </div>
 
-        {tab === 'plan'     && <PlanTab     doc={doc} commit={commit} />}
-        {tab === 'paces'    && <PacesTab    doc={doc} commit={commit} />}
-        {tab === 'strength' && <StrengthTab />}
-        {tab === 'rules'    && <RulesTab    doc={doc} />}
-        {tab === 'status'   && <StatusTab   doc={doc} />}
+        {tab === 'plan'      && <PlanTab     doc={doc} commit={commit} />}
+        {tab === 'paces'     && <PacesTab    doc={doc} commit={commit} />}
+        {tab === 'strength'  && <StrengthTab />}
+        {tab === 'rules'     && <RulesTab    doc={doc} />}
+        {tab === 'status'    && <StatusTab   doc={doc} />}
+        {tab === 'character' && <CharacterTab doc={doc} commit={commit} />}
       </div>
     </div>
   );

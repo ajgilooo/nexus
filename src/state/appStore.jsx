@@ -1,27 +1,36 @@
-// src/state/appStore.js
+// src/state/appStore.jsx
 // Central state management. Single in-memory unified doc + React context.
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { Store } from '../lib/storage.js';
 import { freshState, coerceModuleData } from '../lib/medi.logic.js';
 import { DEFAULT_BM } from '../lib/kinetix.data.js';
+import { SHOP_SEED, rpgTick } from '../lib/rpg.logic.js';
 
 const USER_ID = 'joseph';
 
 // ── Default doc ───────────────────────────────────────────────────────────────
 function defaultDoc() {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     ui: { activeWorld: 'today' },
     medi: {
       state: freshState(),
       sylState: { topics: [], checked: {} },
-      caseLog: []
+      caseLog: [],
+      rotationExams: []
     },
     kinetix: {
       checks: {},
       bm: { ...DEFAULT_BM },
       heat: false
+    },
+    rpg: {
+      coins: 0,
+      redemptions: [],
+      shop: [...SHOP_SEED],
+      badgeState: {},
+      xpLedgerCache: { lifetimeXP: 0, computedAt: 0 }
     }
   };
 }
@@ -31,7 +40,7 @@ function migrate(raw) {
   if (!raw) return defaultDoc();
   const def = defaultDoc();
   const doc = { ...def, ...raw };
-  doc.schemaVersion = 3;
+  doc.schemaVersion = 4;
 
   doc.ui = { activeWorld: 'today', ...(raw.ui || {}) };
 
@@ -49,6 +58,7 @@ function migrate(raw) {
   }
   if (!doc.medi.sylState) doc.medi.sylState = { topics: [], checked: {} };
   if (!doc.medi.caseLog) doc.medi.caseLog = [];
+  if (!Array.isArray(doc.medi.rotationExams)) doc.medi.rotationExams = [];
   // examLog lives inside state; carry over any legacy medi.examLog placement.
   if (!Array.isArray(doc.medi.state.examLog)) {
     doc.medi.state.examLog = Array.isArray(doc.medi.examLog) ? doc.medi.examLog : [];
@@ -61,6 +71,19 @@ function migrate(raw) {
     doc.kinetix.bm = { ...DEFAULT_BM };
   }
   if (typeof doc.kinetix.heat !== 'boolean') doc.kinetix.heat = false;
+
+  // RPG — seed on first migration or if missing
+  const rawRpg = raw.rpg || {};
+  doc.rpg = {
+    coins: Math.max(0, Number(rawRpg.coins) || 0),
+    redemptions: Array.isArray(rawRpg.redemptions) ? rawRpg.redemptions : [],
+    shop: Array.isArray(rawRpg.shop) && rawRpg.shop.length > 0 ? rawRpg.shop : [...SHOP_SEED],
+    badgeState: (rawRpg.badgeState && typeof rawRpg.badgeState === 'object') ? rawRpg.badgeState : {},
+    xpLedgerCache: (rawRpg.xpLedgerCache && typeof rawRpg.xpLedgerCache === 'object')
+      ? rawRpg.xpLedgerCache
+      : { lifetimeXP: 0, computedAt: 0 }
+  };
+  if (typeof doc.rpg.xpLedgerCache.lifetimeXP !== 'number') doc.rpg.xpLedgerCache.lifetimeXP = 0;
 
   return doc;
 }
@@ -95,6 +118,8 @@ export function AppProvider({ children }) {
   }, []);
 
   const commit = useCallback((nextDoc) => {
+    // Run RPG tick before saving
+    rpgTick(nextDoc);
     dispatch({ type: 'COMMIT', payload: nextDoc });
     Store.save(USER_ID, nextDoc);
   }, []);

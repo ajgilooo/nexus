@@ -33,7 +33,9 @@ sketchybar --default \
   background.drawing=on \
   background.color=0x10FFFFFF
 
-# ── Internship / PLE countdown (LEFT) ─────────────────────────────────────────
+# ── LEFT — system context ──────────────────────────────────────────────────────
+
+# Internship / PLE countdown
 sketchybar --add item nexus_countdown left \
   --set nexus_countdown \
     update_freq=3600 \
@@ -41,7 +43,28 @@ sketchybar --add item nexus_countdown left \
     icon.font="$ICON_FONT" \
     label.font="$MONO_FONT"
 
-# ── Clock (center, no background) ─────────────────────────────────────────────
+# Tiny gap
+sketchybar --add item spacer_left left \
+  --set spacer_left \
+    icon.drawing=off label.drawing=off background.drawing=off width=4
+
+# WiFi signal icon
+sketchybar --add item nexus_wifi left \
+  --set nexus_wifi \
+    update_freq=30 \
+    script="$PLUGIN_DIR/nexus_wifi.sh" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT"
+
+# Battery
+sketchybar --add item nexus_battery left \
+  --set nexus_battery \
+    update_freq=60 \
+    script="$PLUGIN_DIR/nexus_battery.sh" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT"
+
+# ── CENTER — clock ────────────────────────────────────────────────────────────
 sketchybar --add item clock center \
   --set clock \
     update_freq=10 \
@@ -51,10 +74,10 @@ sketchybar --add item clock center \
     label.color=0xFF94A3B8 \
     script='sketchybar --set clock label="$(date "+%a %-d %b  %-I:%M %p")"'
 
-# ── NEXUS event (triggered by bridge on every commit) ─────────────────────────
+# ── RIGHT — NEXUS pills ───────────────────────────────────────────────────────
 sketchybar --add event nexus_update
 
-# ── Study pill — QBank daily progress ────────────────────────────────────────
+# Study — QBank daily progress
 sketchybar --add item nexus_study right \
   --set nexus_study \
     update_freq=60 \
@@ -64,7 +87,7 @@ sketchybar --add item nexus_study right \
     label.font="$MONO_FONT" \
   --subscribe nexus_study nexus_update
 
-# ── Training pill — current week + phase ─────────────────────────────────────
+# Training — current week + phase
 sketchybar --add item nexus_train right \
   --set nexus_train \
     update_freq=3600 \
@@ -74,7 +97,7 @@ sketchybar --add item nexus_train right \
     label.font="$MONO_FONT" \
   --subscribe nexus_train nexus_update
 
-# ── XP pill — level + progress + coins ───────────────────────────────────────
+# XP — level + progress + coins
 sketchybar --add item nexus_xp right \
   --set nexus_xp \
     update_freq=300 \
@@ -84,7 +107,7 @@ sketchybar --add item nexus_xp right \
     label.font="$MONO_FONT" \
   --subscribe nexus_xp nexus_update
 
-# ── Duty pill — mode indicator + high-pri todo alert ─────────────────────────
+# Duty — mode indicator + high-pri todo alert
 sketchybar --add item nexus right \
   --set nexus \
     update_freq=60 \
@@ -93,29 +116,5 @@ sketchybar --add item nexus right \
     icon.font="$ICON_FONT" \
     label.font="$MONO_FONT" \
   --subscribe nexus nexus_update
-
-# ── Spacer between NEXUS pills and system items ───────────────────────────────
-sketchybar --add item spacer_sys right \
-  --set spacer_sys \
-    icon.drawing=off \
-    label.drawing=off \
-    background.drawing=off \
-    width=6
-
-# ── WiFi pill ─────────────────────────────────────────────────────────────────
-sketchybar --add item nexus_wifi right \
-  --set nexus_wifi \
-    update_freq=30 \
-    script="$PLUGIN_DIR/nexus_wifi.sh" \
-    icon.font="$ICON_FONT" \
-    label.font="$MONO_FONT"
-
-# ── Battery pill ──────────────────────────────────────────────────────────────
-sketchybar --add item nexus_battery right \
-  --set nexus_battery \
-    update_freq=60 \
-    script="$PLUGIN_DIR/nexus_battery.sh" \
-    icon.font="$ICON_FONT" \
-    label.font="$MONO_FONT"
 
 sketchybar --update

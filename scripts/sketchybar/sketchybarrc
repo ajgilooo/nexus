@@ -1,54 +1,103 @@
 #!/bin/bash
-# NEXUS SketchyBar config — auto-runs on SketchyBar startup
+# NEXUS SketchyBar — digital command bar
+# Auto-runs on SketchyBar startup. Bridge auto-starts via launchd.
+#
+# Optional icon upgrade (one command, no restart needed):
+#   brew install --cask font-jetbrains-mono-nerd-font
+#   Then change ICON_FONT below to: "JetBrainsMono Nerd Font Mono:Regular:13.0"
+#   And swap icon chars in each plugin to Nerd Font glyphs.
+
+PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
+ICON_FONT="SF Pro:Bold:13.0"
+MONO_FONT="SF Mono:Regular:12.0"
+LABEL_FONT="SF Pro:Semibold:12.0"
 
 # ── Bar ───────────────────────────────────────────────────────────────────────
 sketchybar --bar \
-  height=32 \
-  blur_radius=20 \
+  height=34 \
   position=top \
   sticky=on \
-  padding_left=12 \
-  padding_right=12 \
-  color=0xBB0E1420 \
-  border_width=1 \
-  border_color=0x22FFFFFF
+  padding_left=10 \
+  padding_right=10 \
+  color=0xD40A0E14 \
+  border_width=0 \
+  shadow=off
 
+# ── Defaults ──────────────────────────────────────────────────────────────────
 sketchybar --default \
-  icon.font="SF Pro:Semibold:13.0" \
-  label.font="SF Pro:Semibold:12.0" \
-  icon.color=0xFFF1F5F9 \
-  label.color=0xFFF1F5F9 \
-  icon.padding_left=6 \
-  icon.padding_right=4 \
+  updates=when_shown \
+  icon.font="$ICON_FONT" \
+  label.font="$MONO_FONT" \
+  icon.color=0xFFCBD5E1 \
+  label.color=0xFFCBD5E1 \
+  icon.padding_left=8 \
+  icon.padding_right=5 \
   label.padding_left=0 \
-  label.padding_right=6 \
-  background.corner_radius=6 \
-  background.height=24 \
-  background.padding_left=4 \
-  background.padding_right=4
+  label.padding_right=9 \
+  background.height=26 \
+  background.corner_radius=7 \
+  background.drawing=on \
+  background.color=0x10FFFFFF
 
-# ── Clock (center) ────────────────────────────────────────────────────────────
+# ── Clock (center, no background) ─────────────────────────────────────────────
 sketchybar --add item clock center \
   --set clock \
     update_freq=10 \
     icon.drawing=off \
     background.drawing=off \
     label.font="SF Pro:Semibold:13.0" \
+    label.color=0xFF94A3B8 \
     script='sketchybar --set clock label="$(date "+%a %-d %b  %-I:%M %p")"'
 
-# ── NEXUS (right) ─────────────────────────────────────────────────────────────
-PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
+# ── Separator between clock and NEXUS items ───────────────────────────────────
+sketchybar --add item spacer_nexus right \
+  --set spacer_nexus \
+    icon.drawing=off \
+    label.drawing=off \
+    background.drawing=off \
+    width=4
 
+# ── NEXUS event (triggered by bridge on every commit) ─────────────────────────
 sketchybar --add event nexus_update
 
+# ── Study pill — QBank daily progress ────────────────────────────────────────
+sketchybar --add item nexus_study right \
+  --set nexus_study \
+    update_freq=60 \
+    script="$PLUGIN_DIR/nexus_study.sh" \
+    click_script="open 'https://nexus-sigma-livid.vercel.app'" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT" \
+  --subscribe nexus_study nexus_update
+
+# ── Training pill — current week + phase ─────────────────────────────────────
+sketchybar --add item nexus_train right \
+  --set nexus_train \
+    update_freq=3600 \
+    script="$PLUGIN_DIR/nexus_train.sh" \
+    click_script="open 'https://nexus-sigma-livid.vercel.app'" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT" \
+  --subscribe nexus_train nexus_update
+
+# ── XP pill — level + progress + coins ───────────────────────────────────────
+sketchybar --add item nexus_xp right \
+  --set nexus_xp \
+    update_freq=300 \
+    script="$PLUGIN_DIR/nexus_xp.sh" \
+    click_script="open 'https://nexus-sigma-livid.vercel.app'" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT" \
+  --subscribe nexus_xp nexus_update
+
+# ── Duty pill — mode indicator + high-pri todo alert ─────────────────────────
 sketchybar --add item nexus right \
   --set nexus \
     update_freq=60 \
     script="$PLUGIN_DIR/nexus.sh" \
-    click_script="open https://nexus-sigma-livid.vercel.app" \
-    background.drawing=on \
-    background.color=0x115C6B79 \
-    label.padding_right=8 \
+    click_script="open 'https://nexus-sigma-livid.vercel.app'" \
+    icon.font="$ICON_FONT" \
+    label.font="$LABEL_FONT" \
   --subscribe nexus nexus_update
 
 sketchybar --update

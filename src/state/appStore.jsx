@@ -3,9 +3,10 @@
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useState } from 'react';
 import { Store } from '../lib/storage.js';
-import { freshState, coerceModuleData } from '../lib/medi.logic.js';
-import { DEFAULT_BM } from '../lib/kinetix.data.js';
-import { SHOP_SEED, rpgTick } from '../lib/rpg.logic.js';
+import { freshState, coerceModuleData, calcReadiness, calcStreak, todayKey, daysToExam, recommendedDailyTarget } from '../lib/medi.logic.js';
+import { DEFAULT_BM, W, PH } from '../lib/kinetix.data.js';
+import { SHOP_SEED, rpgTick, computeLifetimeXP, levelProgress } from '../lib/rpg.logic.js';
+import { currentWeekIdx } from '../lib/kinetix.logic.js';
 
 const USER_ID = 'joseph';
 
@@ -40,19 +41,67 @@ function defaultDoc() {
 // ── Migration / coercion ──────────────────────────────────────────────────────
 // ── SketchyBar bridge sync (fire-and-forget) ──────────────────────────────────
 function buildBridgePayload(doc) {
-  const todos = doc.todos || [];
+  const todos  = doc.todos || [];
   const active = todos.filter(t => !t.done);
-  const high = active.filter(t => t.priority === 'high');
-  const next = [...active].sort((a, b) => {
+  const high   = active.filter(t => t.priority === 'high');
+  const next   = [...active].sort((a, b) => {
     const w = { high: 0, normal: 1, low: 2 };
     return (w[a.priority] || 1) - (w[b.priority] || 1);
   })[0];
+
+  // MEDI
+  const state = doc.medi?.state || {};
+  const dm    = state.dailyTargetMetrics || {};
+  const isToday   = dm.dayKey === todayKey();
+  const qbankDone = isToday ? (dm.currentDayCompletedCount || 0) : 0;
+  const qbankTarget = dm.questionsPerDayTarget || recommendedDailyTarget();
+  const qbankPct    = qbankTarget > 0 ? Math.round(qbankDone / qbankTarget * 100) : 0;
+  const streak      = calcStreak(state);
+  const examDays    = daysToExam();
+  const readiness   = doc.medi ? Math.round(calcReadiness(doc.medi.state, doc.medi.rotationExams || []).total) : 0;
+
+  // KINETIX
+  const wIdx = currentWeekIdx();
+  const wk   = wIdx >= 0 && wIdx < W.length ? W[wIdx] : null;
+  const ph   = wk ? PH[wk.ph] : null;
+  // Short phase label: take text before first '—' or '·', max 14 chars
+  const phShort = ph ? ph.n.split(/[—–·]/)[0].trim().slice(0, 14) : '—';
+  const firstRun = wk?.mods?.find(m => ['e', 'l', 'q', 't'].includes(m.t));
+  const nextSession = firstRun ? firstRun.tx.slice(0, 36) : '—';
+
+  // RPG
+  const xp   = computeLifetimeXP(doc);
+  const prog = levelProgress(xp);
+
   return {
-    updatedAt: new Date().toISOString(),
-    duty: doc.duty || { mode: null },
-    todos: { total: todos.length, done: todos.filter(t => t.done).length, active: active.length, high: high.length, next: next?.text || null },
-    medi:   { streak: doc.medi?.state?.streak || 0 },
-    rpg:    { coins: doc.rpg?.coins || 0 },
+    updatedAt:     new Date().toISOString(),
+    duty: doc.duty || { mode: null, setAt: null },
+    todos: {
+      total:  todos.length,
+      done:   todos.filter(t => t.done).length,
+      active: active.length,
+      high:   high.length,
+      next:   next?.text || null,
+    },
+    medi: {
+      streak, qbankDone, qbankTarget, qbankPct,
+      readiness, daysToExam: examDays,
+    },
+    kinetix: {
+      weekIdx: wIdx,
+      weekNum: wIdx + 1,
+      phaseShort: phShort,
+      kmMin: wk?.km[0] || 0,
+      kmMax: wk?.km[1] || 0,
+      nextSession,
+    },
+    rpg: {
+      level:  prog.level,
+      xpInto: Math.round(prog.into),
+      xpSpan: Math.round(prog.span),
+      xpPct:  Math.round(prog.pct),
+      coins:  doc.rpg?.coins || 0,
+    },
   };
 }
 async function bridgeSync(doc) {

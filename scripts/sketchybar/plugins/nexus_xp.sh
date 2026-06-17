@@ -4,7 +4,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 SF="$HOME/.nexus/status.json"
 [ ! -f "$SF" ] && sketchybar --set "$NAME" drawing=off && exit 0
 
-read -r LV XP_BAR COINS_FMT <<< "$(/usr/bin/python3 - "$SF" <<'PY'
+read -r ICON LV XP_BAR COINS_FMT <<< "$(/usr/bin/python3 - "$SF" <<'PY'
 import json, sys
 
 def bar(pct, n=7):
@@ -19,15 +19,15 @@ try:
     pct   = rpg.get("xpPct", 0)
     coins = rpg.get("coins", 0)
     cfmt  = f"{coins/1000:.1f}k" if coins >= 1000 else str(coins)
-    print(lv, bar(pct), cfmt)
+    print(chr(0xF005), lv, bar(pct), cfmt)
 except:
-    print(1, "░░░░░░░", "0")
+    print(chr(0xF005), 1, "░░░░░░░", "0")
 PY
 )"
 
 sketchybar --set "$NAME" \
   drawing=on \
-  icon="✦" \
+  icon="$ICON" \
   label="Lv${LV}  ${XP_BAR}  ◈ ${COINS_FMT}" \
   icon.color=0xFFd97706 \
   label.color=0xFFCBD5E1 \

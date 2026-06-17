@@ -4,7 +4,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 SF="$HOME/.nexus/status.json"
 [ ! -f "$SF" ] && sketchybar --set "$NAME" drawing=off && exit 0
 
-read -r Q_DONE Q_TARGET Q_PCT Q_BAR <<< "$(/usr/bin/python3 - "$SF" <<'PY'
+read -r ICON Q_DONE Q_TARGET Q_PCT Q_BAR <<< "$(/usr/bin/python3 - "$SF" <<'PY'
 import json, sys
 
 def bar(pct, n=7):
@@ -18,9 +18,9 @@ try:
     done   = m.get("qbankDone", 0)
     target = m.get("qbankTarget", 40)
     pct    = m.get("qbankPct", 0)
-    print(done, target, pct, bar(pct))
+    print(chr(0xF02D), done, target, pct, bar(pct))
 except:
-    print(0, 40, 0, "░░░░░░░")
+    print(chr(0xF02D), 0, 40, 0, "░░░░░░░")
 PY
 )"
 
@@ -34,7 +34,7 @@ fi
 
 sketchybar --set "$NAME" \
   drawing=on \
-  icon="◉" \
+  icon="$ICON" \
   label="${Q_DONE} / ${Q_TARGET}  ${Q_BAR}" \
   icon.color="$COLOR" \
   label.color="$COLOR" \

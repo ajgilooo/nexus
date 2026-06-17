@@ -1,16 +1,10 @@
 #!/bin/bash
 # NEXUS SketchyBar — digital command bar
-# Auto-runs on SketchyBar startup. Bridge auto-starts via launchd.
-#
-# Optional icon upgrade (one command, no restart needed):
-#   brew install --cask font-jetbrains-mono-nerd-font
-#   Then change ICON_FONT below to: "JetBrainsMono Nerd Font Mono:Regular:13.0"
-#   And swap icon chars in each plugin to Nerd Font glyphs.
+# Icons: JetBrainsMono Nerd Font Mono (brew install --cask font-jetbrains-mono-nerd-font)
 
 PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
-ICON_FONT="SF Pro:Bold:13.0"
-MONO_FONT="SF Mono:Regular:12.0"
-LABEL_FONT="SF Pro:Semibold:12.0"
+ICON_FONT="JetBrainsMono Nerd Font Mono:Regular:14.0"
+MONO_FONT="JetBrainsMono Nerd Font Mono:Regular:12.0"
 
 # ── Bar ───────────────────────────────────────────────────────────────────────
 sketchybar --bar \
@@ -39,6 +33,14 @@ sketchybar --default \
   background.drawing=on \
   background.color=0x10FFFFFF
 
+# ── Internship / PLE countdown (LEFT) ─────────────────────────────────────────
+sketchybar --add item nexus_countdown left \
+  --set nexus_countdown \
+    update_freq=3600 \
+    script="$PLUGIN_DIR/nexus_countdown.sh" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT"
+
 # ── Clock (center, no background) ─────────────────────────────────────────────
 sketchybar --add item clock center \
   --set clock \
@@ -48,14 +50,6 @@ sketchybar --add item clock center \
     label.font="SF Pro:Semibold:13.0" \
     label.color=0xFF94A3B8 \
     script='sketchybar --set clock label="$(date "+%a %-d %b  %-I:%M %p")"'
-
-# ── Separator between clock and NEXUS items ───────────────────────────────────
-sketchybar --add item spacer_nexus right \
-  --set spacer_nexus \
-    icon.drawing=off \
-    label.drawing=off \
-    background.drawing=off \
-    width=4
 
 # ── NEXUS event (triggered by bridge on every commit) ─────────────────────────
 sketchybar --add event nexus_update
@@ -97,7 +91,31 @@ sketchybar --add item nexus right \
     script="$PLUGIN_DIR/nexus.sh" \
     click_script="open 'https://nexus-sigma-livid.vercel.app'" \
     icon.font="$ICON_FONT" \
-    label.font="$LABEL_FONT" \
+    label.font="$MONO_FONT" \
   --subscribe nexus nexus_update
+
+# ── Spacer between NEXUS pills and system items ───────────────────────────────
+sketchybar --add item spacer_sys right \
+  --set spacer_sys \
+    icon.drawing=off \
+    label.drawing=off \
+    background.drawing=off \
+    width=6
+
+# ── WiFi pill ─────────────────────────────────────────────────────────────────
+sketchybar --add item nexus_wifi right \
+  --set nexus_wifi \
+    update_freq=30 \
+    script="$PLUGIN_DIR/nexus_wifi.sh" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT"
+
+# ── Battery pill ──────────────────────────────────────────────────────────────
+sketchybar --add item nexus_battery right \
+  --set nexus_battery \
+    update_freq=60 \
+    script="$PLUGIN_DIR/nexus_battery.sh" \
+    icon.font="$ICON_FONT" \
+    label.font="$MONO_FONT"
 
 sketchybar --update

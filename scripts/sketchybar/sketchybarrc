@@ -1,26 +1,7 @@
 #!/bin/bash
-# ══════════════════════════════════════════════════════════════════════════════
-# NEXUS SketchyBar config
-# ══════════════════════════════════════════════════════════════════════════════
-# SETUP (one-time):
-#   1. brew install sketchybar
-#   2. brew services start sketchybar
-#   3. mkdir -p ~/.config/sketchybar/plugins
-#   4. cp scripts/sketchybar/plugins/nexus.sh ~/.config/sketchybar/plugins/
-#   5. chmod +x ~/.config/sketchybar/plugins/nexus.sh
-#   6. Either use this file as your full config, or copy the NEXUS ITEMS
-#      section below into your existing sketchybarrc.
-#   7. sketchybar --reload
-#
-# Then run the bridge alongside the app:
-#   npm run bridge   (in a separate terminal, or via launchd — see below)
-#
-# LAUNCHD (auto-start bridge on login):
-#   Copy scripts/nexus-bridge.plist to ~/Library/LaunchAgents/
-#   launchctl load ~/Library/LaunchAgents/com.nexus.bridge.plist
-# ══════════════════════════════════════════════════════════════════════════════
+# NEXUS SketchyBar config — auto-runs on SketchyBar startup
 
-# ── Bar appearance ────────────────────────────────────────────────────────────
+# ── Bar ───────────────────────────────────────────────────────────────────────
 sketchybar --bar \
   height=32 \
   blur_radius=20 \
@@ -46,44 +27,28 @@ sketchybar --default \
   background.padding_left=4 \
   background.padding_right=4
 
-# ── Left: Apple menu spacer ───────────────────────────────────────────────────
-sketchybar --add item apple left \
-  --set apple icon="" icon.font="SF Pro:Bold:14.0" \
-    label.drawing=off background.drawing=off \
-    click_script="open -a 'System Preferences'"
-
-# ── Center: clock ─────────────────────────────────────────────────────────────
+# ── Clock (center) ────────────────────────────────────────────────────────────
 sketchybar --add item clock center \
   --set clock \
     update_freq=10 \
     icon.drawing=off \
-    label.font="SF Pro:Semibold:13.0" \
     background.drawing=off \
-    script='sketchybar --set clock label="$(date "+%a %b %-d  %-I:%M %p")"'
+    label.font="SF Pro:Semibold:13.0" \
+    script='sketchybar --set clock label="$(date "+%a %-d %b  %-I:%M %p")"'
 
-# ════════════════════════════════════════════════════════════════════════
-# NEXUS ITEMS — copy this block into your existing config if you already
-# have a sketchybarrc you want to keep.
-# ════════════════════════════════════════════════════════════════════════
-
+# ── NEXUS (right) ─────────────────────────────────────────────────────────────
 PLUGIN_DIR="$HOME/.config/sketchybar/plugins"
 
-# Register custom event triggered by the bridge server after each POST
 sketchybar --add event nexus_update
 
-# ── NEXUS duty status + todo count (right side) ───────────────────────────────
 sketchybar --add item nexus right \
   --set nexus \
-    update_freq=30 \
+    update_freq=60 \
     script="$PLUGIN_DIR/nexus.sh" \
-    click_script="open http://localhost:5173" \
+    click_script="open https://nexus-sigma-livid.vercel.app" \
     background.drawing=on \
     background.color=0x115C6B79 \
     label.padding_right=8 \
   --subscribe nexus nexus_update
-
-# ════════════════════════════════════════════════════════════════════════
-# End NEXUS items
-# ════════════════════════════════════════════════════════════════════════
 
 sketchybar --update

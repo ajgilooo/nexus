@@ -31,16 +31,46 @@ function defaultDoc() {
       shop: [...SHOP_SEED],
       badgeState: {},
       xpLedgerCache: { lifetimeXP: 0, computedAt: 0 }
-    }
+    },
+    duty: { mode: null, setAt: null },
+    todos: []
   };
 }
 
 // ── Migration / coercion ──────────────────────────────────────────────────────
+// ── SketchyBar bridge sync (fire-and-forget) ──────────────────────────────────
+function buildBridgePayload(doc) {
+  const todos = doc.todos || [];
+  const active = todos.filter(t => !t.done);
+  const high = active.filter(t => t.priority === 'high');
+  const next = [...active].sort((a, b) => {
+    const w = { high: 0, normal: 1, low: 2 };
+    return (w[a.priority] || 1) - (w[b.priority] || 1);
+  })[0];
+  return {
+    updatedAt: new Date().toISOString(),
+    duty: doc.duty || { mode: null },
+    todos: { total: todos.length, done: todos.filter(t => t.done).length, active: active.length, high: high.length, next: next?.text || null },
+    medi:   { streak: doc.medi?.state?.streak || 0 },
+    rpg:    { coins: doc.rpg?.coins || 0 },
+  };
+}
+async function bridgeSync(doc) {
+  try {
+    await fetch('http://localhost:47893/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildBridgePayload(doc)),
+      signal: AbortSignal.timeout(1500),
+    });
+  } catch { /* bridge not running — silent */ }
+}
+
 function migrate(raw) {
   if (!raw) return defaultDoc();
   const def = defaultDoc();
   const doc = { ...def, ...raw };
-  doc.schemaVersion = 4;
+  doc.schemaVersion = 5;
 
   doc.ui = { activeWorld: 'today', ...(raw.ui || {}) };
 
@@ -85,6 +115,10 @@ function migrate(raw) {
   };
   if (typeof doc.rpg.xpLedgerCache.lifetimeXP !== 'number') doc.rpg.xpLedgerCache.lifetimeXP = 0;
 
+  // Duty + todos (v5)
+  doc.duty = { mode: null, setAt: null, ...(raw.duty || {}) };
+  if (!Array.isArray(doc.todos)) doc.todos = [];
+
   return doc;
 }
 
@@ -118,10 +152,10 @@ export function AppProvider({ children }) {
   }, []);
 
   const commit = useCallback((nextDoc) => {
-    // Run RPG tick before saving
     rpgTick(nextDoc);
     dispatch({ type: 'COMMIT', payload: nextDoc });
     Store.save(USER_ID, nextDoc);
+    bridgeSync(nextDoc);
   }, []);
 
   const setWorld = useCallback((world) => {

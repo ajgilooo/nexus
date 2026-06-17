@@ -1,5 +1,7 @@
 // src/components/today/TodayWorld.jsx
 import { buildActionMatrix, buildYearCalendar, PH_COLOR_VARS } from '../../lib/today.logic.js';
+import DutyBanner from './DutyBanner.jsx';
+import TodoPanel from './TodoPanel.jsx';
 
 const TONE_META = {
   critical: { dot: 'var(--race)',  label: 'tone-critical' },
@@ -173,30 +175,45 @@ function YearCalendar({ cal, onNavigate }) {
 }
 
 // ── Today World ───────────────────────────────────────────────────────────────
-export default function TodayWorld({ doc, onNavigate }) {
+export default function TodayWorld({ doc, commit, onNavigate }) {
   const { actions, meta } = buildActionMatrix(doc);
   const cal = buildYearCalendar(doc);
 
-  const topActions = actions.slice(0, 6);
+  // Duty-aware: de-emphasize intensive study actions in post-duty mode
+  const dutyMode = doc.duty?.mode;
+  const visibleActions = actions.slice(0, 6).map(a => {
+    if (dutyMode === 'post-duty' && a.world === 'medi' && a.id !== 'medi-daily-done') {
+      return { ...a, detail: a.detail + ' · Rest day — low priority' };
+    }
+    return a;
+  });
 
   return (
     <div className="today-world">
       <div className="today-inner">
+        <DutyBanner doc={doc} commit={commit} />
+
         <HeroStats meta={meta} />
 
         <div className="today-section-label">
           <span>Do this next</span>
-          <span className="today-section-sub">ranked across study + training</span>
+          <span className="today-section-sub">
+            ranked across study + training
+            {dutyMode === 'post-duty' && <span className="duty-mode-note"> · rest day active</span>}
+            {dutyMode === 'duty'      && <span className="duty-mode-note"> · shift mode</span>}
+          </span>
         </div>
 
         <div className="action-list">
-          {topActions.length === 0 && (
+          {visibleActions.length === 0 && (
             <div className="empty-state">Nothing pressing right now. Open a world to dig in.</div>
           )}
-          {topActions.map((a, i) => (
+          {visibleActions.map((a, i) => (
             <ActionCard key={a.id} action={a} onNavigate={onNavigate} rank={i} />
           ))}
         </div>
+
+        <TodoPanel doc={doc} commit={commit} />
 
         <YearCalendar cal={cal} onNavigate={onNavigate} />
       </div>

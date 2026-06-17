@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- launchd agent — auto-starts nexus-bridge on login.
+     Install:
+       cp scripts/nexus-bridge.plist ~/Library/LaunchAgents/com.nexus.bridge.plist
+       # Edit WorkingDirectory below to your actual nexus path
+       launchctl load ~/Library/LaunchAgents/com.nexus.bridge.plist
+
+     Start now without rebooting:
+       launchctl start com.nexus.bridge
+
+     Unload:
+       launchctl unload ~/Library/LaunchAgents/com.nexus.bridge.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.nexus.bridge</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>/Users/arnielgilo/Downloads/nexus/scripts/nexus-bridge.js</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/arnielgilo/Downloads/nexus</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/nexus-bridge.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/nexus-bridge.log</string>
+</dict>
+</plist>

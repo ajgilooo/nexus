@@ -1177,3 +1177,144 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 [data-world="medi"]    { --accent: #10B981; --accent-dim: #0f7a5a; }
 [data-world="kinetix"] { --accent: #2DD4A7; --accent-dim: #1c7c64; }
 [data-world="today"]   { --accent: #10B981; --accent-dim: #0f7a5a; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DUTY BANNER
+   ══════════════════════════════════════════════════════════════════════════ */
+.duty-banner {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.duty-top-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+.duty-active-pill {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.82rem; font-weight: 800; font-family: var(--font-mono);
+  border: 1px solid; border-radius: 20px; padding: 3px 12px;
+  letter-spacing: 0.05em;
+}
+.duty-icon { font-size: 0.9rem; }
+.duty-mode-label { letter-spacing: 0.08em; }
+.duty-set-time { font-size: 0.62rem; font-weight: 400; opacity: 0.7; }
+.duty-inactive-label { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.duty-btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.duty-btn {
+  font-size: 0.7rem; font-weight: 700; font-family: var(--font-mono);
+  padding: 4px 10px; border-radius: 16px;
+  background: transparent; border: 1px solid var(--line); color: var(--muted);
+  cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.duty-btn:hover { border-color: var(--muted); color: var(--text); }
+.duty-btn-active { font-weight: 800; }
+.duty-btn-clear { opacity: 0.5; padding: 4px 8px; }
+.duty-btn-clear:hover { opacity: 1; color: var(--danger); border-color: var(--danger); }
+.duty-context-row {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid;
+  display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;
+}
+.duty-hint { font-size: 0.72rem; font-weight: 600; white-space: nowrap; padding-top: 2px; }
+.duty-focus-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.duty-chip {
+  font-size: 0.64rem; font-weight: 600; padding: 2px 8px;
+  border: 1px solid; border-radius: 10px; opacity: 0.75;
+}
+.duty-mode-note { font-weight: 600; font-size: 0.7rem; opacity: 0.8; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TODO PANEL
+   ══════════════════════════════════════════════════════════════════════════ */
+.todo-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-md);
+  padding: 0; overflow: hidden; margin-bottom: 16px;
+}
+.todo-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; border-bottom: 1px solid var(--line);
+}
+.todo-title { font-size: 0.8rem; font-weight: 800; color: var(--text); letter-spacing: 0.04em; }
+.todo-high-badge {
+  font-size: 0.62rem; font-weight: 700; font-family: var(--font-mono);
+  padding: 2px 6px; border-radius: 8px;
+  background: rgba(255,107,74,0.15); color: var(--race); border: 1px solid rgba(255,107,74,0.25);
+}
+.todo-filters { display: flex; gap: 4px; }
+.todo-filter-btn {
+  font-size: 0.68rem; font-weight: 600; padding: 3px 9px;
+  border-radius: 10px; background: transparent; border: 1px solid transparent;
+  color: var(--muted); cursor: pointer; transition: all 0.12s;
+}
+.todo-filter-btn:hover { color: var(--text); }
+.todo-filter-btn.active { background: var(--panel-2); border-color: var(--line); color: var(--text); }
+
+.todo-add-row {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); background: var(--panel-2);
+}
+.todo-add-pri {
+  font-size: 0.7rem; font-weight: 700; font-family: var(--font-mono);
+  background: transparent; border: 1px solid currentColor; border-radius: 8px;
+  padding: 3px 7px; cursor: pointer; white-space: nowrap; opacity: 0.8;
+  transition: opacity 0.12s;
+}
+.todo-add-pri:hover { opacity: 1; }
+.todo-add-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: var(--text); font-size: 0.82rem; font-family: var(--font-sans);
+  placeholder-color: var(--dim);
+}
+.todo-add-input::placeholder { color: var(--dim); }
+.todo-add-submit {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: var(--accent); border: none; color: #000; font-size: 1rem; font-weight: 800;
+  cursor: pointer; transition: opacity 0.12s; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.todo-add-submit:disabled { opacity: 0.25; cursor: default; }
+
+.todo-list { display: flex; flex-direction: column; }
+.todo-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.1s;
+}
+.todo-item:last-child { border-bottom: none; }
+.todo-item:hover { background: rgba(255,255,255,0.025); }
+.todo-item-done { opacity: 0.45; }
+.todo-pri-dot { font-size: 0.6rem; flex-shrink: 0; }
+.todo-check {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--line); background: transparent;
+  cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; color: var(--accent); transition: all 0.12s;
+}
+.todo-check:hover { border-color: var(--accent); }
+.todo-check-done { background: var(--accent); border-color: var(--accent); color: #000; }
+.todo-text {
+  flex: 1; font-size: 0.82rem; color: var(--text); cursor: default; word-break: break-word; line-height: 1.35;
+}
+.todo-item-done .todo-text { text-decoration: line-through; }
+.todo-edit-input {
+  flex: 1; background: var(--panel-2); border: 1px solid var(--accent);
+  border-radius: 4px; padding: 2px 6px; color: var(--text);
+  font-size: 0.82rem; font-family: var(--font-sans); outline: none;
+}
+.todo-pri-badge {
+  font-size: 0.62rem; font-weight: 700; font-family: var(--font-mono);
+  padding: 1px 6px; border-radius: 6px; border: 1px solid;
+  background: transparent; cursor: pointer; flex-shrink: 0;
+  opacity: 0.7; transition: opacity 0.12s;
+}
+.todo-pri-badge:hover { opacity: 1; }
+.todo-del {
+  font-size: 0.65rem; color: var(--dim); background: transparent; border: none;
+  cursor: pointer; padding: 2px 4px; opacity: 0; transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.todo-item:hover .todo-del { opacity: 1; }
+.todo-del:hover { color: var(--danger); }
+.todo-empty { padding: 18px 14px; font-size: 0.78rem; color: var(--dim); text-align: center; }

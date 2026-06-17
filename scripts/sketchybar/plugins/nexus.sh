@@ -1,7 +1,7 @@
 #!/bin/bash
-# nexus.sh — NEXUS duty status + readiness for SketchyBar
+# nexus.sh — NEXUS duty status + todos + level for SketchyBar
 # Reads from ~/.nexus/status.json (written by nexus-bridge.js)
-# Item triggers: update_freq=30 OR event=nexus_update
+# Triggers: update_freq=60 AND event=nexus_update (real-time push from bridge)
 
 STATUS_FILE="$HOME/.nexus/status.json"
 
@@ -12,25 +12,31 @@ if [ ! -f "$STATUS_FILE" ]; then
   exit 0
 fi
 
-# Parse with python3 (available on macOS by default)
-read -r MODE STREAK COINS TODOS_ACTIVE TODOS_HIGH NEXT_TODO <<< "$(python3 - <<'PYEOF'
+# Parse status.json
+eval "$(python3 - <<'PYEOF'
 import json, sys
 try:
     with open("$STATUS_FILE") as f:
         d = json.load(f)
-    mode         = d.get("duty", {}).get("mode", "") or "off"
-    streak       = d.get("medi", {}).get("streak", 0)
-    coins        = d.get("rpg", {}).get("coins", 0)
-    todos        = d.get("todos", {})
-    active       = todos.get("active", 0)
-    high         = todos.get("high", 0)
-    nxt          = todos.get("next", "") or ""
-    print(mode, streak, coins, active, high, nxt[:30] if nxt else "")
-except:
-    print("off 0 0 0 0 ")
+    mode    = d.get("duty", {}).get("mode", "") or "off"
+    level   = d.get("rpg", {}).get("level", 1)
+    coins   = d.get("rpg", {}).get("coins", 0)
+    todos   = d.get("todos", {})
+    active  = todos.get("active", 0)
+    high    = todos.get("high", 0)
+    nxt     = (todos.get("next") or "")[:28]
+    print(f'MODE={mode}')
+    print(f'LEVEL={level}')
+    print(f'COINS={coins}')
+    print(f'TODOS_ACTIVE={active}')
+    print(f'TODOS_HIGH={high}')
+    print(f'NEXT_TODO={nxt}')
+except Exception as e:
+    print('MODE=off\nLEVEL=1\nCOINS=0\nTODOS_ACTIVE=0\nTODOS_HIGH=0\nNEXT_TODO=')
 PYEOF
 )"
 
+# Duty mode appearance
 case "$MODE" in
   pre-duty)
     ICON="☀"
@@ -58,19 +64,21 @@ case "$MODE" in
     ;;
 esac
 
-# Append todo count if any active
-EXTRA=""
+# Append: level · todo summary
+LEVEL_TAG="Lv${LEVEL}"
+
+TODO_TAG=""
 if [ "$TODOS_ACTIVE" -gt 0 ] 2>/dev/null; then
   if [ "$TODOS_HIGH" -gt 0 ] 2>/dev/null; then
-    EXTRA="  ● ${TODOS_HIGH}↑"
+    TODO_TAG="  ●${TODOS_HIGH}↑ ${TODOS_ACTIVE}t"
   else
-    EXTRA="  ○ ${TODOS_ACTIVE}"
+    TODO_TAG="  ○${TODOS_ACTIVE}t"
   fi
 fi
 
 sketchybar --set "$NAME" \
   icon="$ICON" \
-  label="${LABEL}${EXTRA}" \
+  label="${LABEL}  ${LEVEL_TAG}${TODO_TAG}" \
   icon.color="$ICON_COLOR" \
   label.color="$ICON_COLOR" \
   background.color="$BG_COLOR"

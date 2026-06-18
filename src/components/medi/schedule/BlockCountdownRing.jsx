@@ -1,6 +1,7 @@
 // src/components/medi/schedule/BlockCountdownRing.jsx
 // mode='countdown' → D-N days left arc
 // mode='coverage'  → percentage arc (used in 12-subject coverage grid)
+import { useEffect, useState } from 'react';
 
 export default function BlockCountdownRing({
   // countdown mode
@@ -38,9 +39,18 @@ export default function BlockCountdownRing({
     centerBottom = isUpcoming ? 'days away' : 'days left';
   }
 
-  const dash = circ * frac;
+  const targetOffset = circ - circ * frac; // 0 = full ring, circ = empty
   const fs1  = size * 0.185;
   const fs2  = size * 0.085;
+
+  // Start empty, animate to target after paint — double rAF ensures initial frame renders first
+  const [offset, setOffset] = useState(circ);
+  useEffect(() => {
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(() => setOffset(targetOffset));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []); // mount only — intentional
 
   return (
     <svg
@@ -53,11 +63,13 @@ export default function BlockCountdownRing({
       {/* Track */}
       <circle cx={cx} cy={cy} r={r} fill="none"
         stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
-      {/* Arc */}
+      {/* Arc — .ring-arc carries the CSS transition */}
       <circle cx={cx} cy={cy} r={r} fill="none"
         stroke={color} strokeWidth={stroke}
-        strokeDasharray={`${dash} ${circ}`}
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
         strokeLinecap="round"
+        className="ring-arc"
         style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px` }}
       />
       {/* Center top label */}

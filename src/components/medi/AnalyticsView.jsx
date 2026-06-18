@@ -131,7 +131,7 @@ function Heatmap({ state }) {
       </div>
       <div className="heatmap-grid">
         {weeks.map((days, wi) => (
-          <div key={wi} className="hm-col">
+          <div key={wi} className="hm-col" style={{ animationDelay: `${wi * 0.009}s` }}>
             {days.map((day, di) => (
               <div
                 key={di}

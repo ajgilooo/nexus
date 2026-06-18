@@ -16,7 +16,72 @@ body { background: #0F172A; color: #F8FAFC; min-height: 100vh; }
   --radius-md: 10px;
   --radius-lg: 14px;
   --transition: 0.15s ease;
+  --spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fillRight {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Progress bar fills — spring from left */
+.gap-bar-inner  { transform-origin: left center; animation: fillRight 1.1s var(--spring) both; }
+.ov-elapsed-fill{ transform-origin: left center; animation: fillRight 1.0s var(--spring) 0.15s both; }
+.rb-bar-fill    { transform-origin: left center; animation: fillRight 1.0s var(--spring) both; }
+
+/* Ring arc draw-in — transition driven by JS (see BlockCountdownRing.jsx) */
+.ring-arc { transition: stroke-dashoffset 1.4s var(--spring); }
+
+/* KPI card stagger */
+.an-grid .kpi-card { animation: fadeUp 0.5s var(--spring) both; }
+.an-grid .kpi-card:nth-child(1) { animation-delay: 0.04s; }
+.an-grid .kpi-card:nth-child(2) { animation-delay: 0.10s; }
+.an-grid .kpi-card:nth-child(3) { animation-delay: 0.16s; }
+.an-grid .kpi-card:nth-child(4) { animation-delay: 0.22s; }
+.an-grid .kpi-card:nth-child(5) { animation-delay: 0.28s; }
+.an-grid .kpi-card:nth-child(6) { animation-delay: 0.34s; }
+
+/* Analytics panels stagger */
+.an-panel { animation: fadeUp 0.55s var(--spring) both; }
+.an-col-left  > .an-panel:nth-child(1) { animation-delay: 0.06s; }
+.an-col-left  > .an-panel:nth-child(2) { animation-delay: 0.13s; }
+.an-col-left  > .an-panel:nth-child(3) { animation-delay: 0.20s; }
+.an-col-left  > .an-panel:nth-child(4) { animation-delay: 0.27s; }
+.an-col-right > .an-panel:nth-child(1) { animation-delay: 0.09s; }
+.an-col-right > .an-panel:nth-child(2) { animation-delay: 0.16s; }
+.an-col-right > .an-panel:nth-child(3) { animation-delay: 0.23s; }
+.an-col-right > .an-panel:nth-child(4) { animation-delay: 0.30s; }
+.an-col-right > .an-panel:nth-child(5) { animation-delay: 0.37s; }
+
+/* Schedule */
+.ov-hero          { animation: fadeUp 0.65s var(--spring) 0.05s both; }
+.ov-col-right .ov-coverage-section { animation: fadeUp 0.6s var(--spring) 0.12s both; }
+.ov-block-detail  { animation: fadeUp 0.28s var(--spring) both; }
+.block-playbook   { animation: fadeIn 0.3s var(--ease-out) 0.08s both; }
+
+/* Heatmap columns — delay set inline per column in JSX */
+.hm-col { animation: fadeIn 0.3s var(--ease-out) both; }
+
+/* Sidebar tabs cascade when world changes */
+.sidebar-tabs .st-btn { animation: fadeIn 0.25s var(--ease-out) both; }
+.sidebar-tabs .st-btn:nth-child(1) { animation-delay: 0.02s; }
+.sidebar-tabs .st-btn:nth-child(2) { animation-delay: 0.06s; }
+.sidebar-tabs .st-btn:nth-child(3) { animation-delay: 0.10s; }
+.sidebar-tabs .st-btn:nth-child(4) { animation-delay: 0.14s; }
+.sidebar-tabs .st-btn:nth-child(5) { animation-delay: 0.18s; }
+.sidebar-tabs .st-btn:nth-child(6) { animation-delay: 0.22s; }
 
 /* ── Unified palette — identical chrome across both worlds ─────────────────── */
 :root, [data-world="today"], [data-world="medi"], [data-world="kinetix"] {

@@ -5,7 +5,8 @@
 
 import {
   CATALOG, SYSTEMS, PHASES, TARGET_EXAM,
-  PLE_WEIGHTS, SUBJ_MODULE_IDS, SUBJECT_ORDER, CAT_TO_SUBJECT
+  PLE_WEIGHTS, SUBJ_MODULE_IDS, SUBJECT_ORDER, CAT_TO_SUBJECT,
+  INTERNSHIP_SCHEDULE
 } from './medi.data.js';
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -32,6 +33,31 @@ export function recommendedDailyTarget() {
   if (p.num === "PHASE 2") return 70;
   if (p.num === "PHASE 3") return 80;
   return 20;
+}
+
+// ── Schedule helpers ──────────────────────────────────────────────────────────
+// Returns { block, upcoming: bool } for today's block, or next upcoming block.
+// Returns null only after the last block ends (post-exam).
+export function currentBlock() {
+  const now = new Date();
+  let upcoming = null;
+  for (const b of INTERNSHIP_SCHEDULE) {
+    const start = new Date(b.start + 'T00:00:00');
+    const end   = new Date(b.end   + 'T23:59:59');
+    if (now >= start && now <= end) return { block: b, upcoming: false };
+    if (!upcoming && start > now) upcoming = b;
+  }
+  return upcoming ? { block: upcoming, upcoming: true } : null;
+}
+
+export function daysRemainingInBlock(block) {
+  const end = new Date(block.end + 'T23:59:59');
+  return Math.max(0, Math.ceil((end - new Date()) / 86400000));
+}
+
+export function daysUntilBlock(block) {
+  const start = new Date(block.start + 'T00:00:00');
+  return Math.max(0, Math.ceil((start - new Date()) / 86400000));
 }
 
 // ── Fresh state ───────────────────────────────────────────────────────────────
@@ -446,6 +472,28 @@ export function calcReadiness(state, rotationExams = []) {
     decayCount,
     mastery
   };
+}
+
+// ── Daily history series (for VelocityChart) ─────────────────────────────────
+// Returns last `days` entries with daily Q count + 7-day rolling avg.
+// Uses the same UNPADDED key format as todayKey() / dailyHistory.
+export function dailyHistorySeries(state, days = 30) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const raw = Array.from({ length: days }, (_, i) => {
+    const d = new Date(today); d.setDate(d.getDate() - (days - 1 - i));
+    const key = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    return {
+      key,
+      date: d,
+      count: state.dailyHistory[key] || 0,
+      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    };
+  });
+  return raw.map((p, i) => ({
+    ...p,
+    avg7: raw.slice(Math.max(0, i - 6), i + 1).reduce((a, x) => a + x.count, 0)
+           / Math.min(i + 1, 7),
+  }));
 }
 
 // ── Syllabus parser ───────────────────────────────────────────────────────────

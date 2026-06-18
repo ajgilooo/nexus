@@ -222,3 +222,61 @@ export const SUBJ_MODULE_IDS = {
     "NBME-SUB-03"
   ],
 };
+
+// ── Internship rotation → PLE subject mapping ─────────────────────────────────
+export const ROTATION_SUBJECTS = {
+  'MED 260':           ['Internal Medicine', 'Pharmacology & Therapeutics'],
+  'PEDIA 260':         ['Pediatrics & Nutrition'],
+  'SURG 260':          ['Surgery, Ophtha, ENT'],
+  'FCH 260':           ['Preventive Med & Public Health'],
+  'FCH 260.1':         ['Preventive Med & Public Health'],
+  'OB-GYN 260':        ['Obstetrics & Gynecology'],
+  '[E] MED 292':       ['Internal Medicine'],
+  '[E] MED 291':       ['Internal Medicine'],
+  '[E] Neurosc 291.1': [],
+};
+
+const _C = ['Obstetrics & Gynecology','Pediatrics & Nutrition','Preventive Med & Public Health',
+            'Pharmacology & Therapeutics','Surgery, Ophtha, ENT','Internal Medicine'];
+const _B = ['Biochemistry','Legal Med, Jurisprudence & Ethics','Pathology',
+            'Physiology','Anatomy & Histology','Microbiology & Parasitology'];
+const _ALL = [..._B, ..._C];
+
+// ── Internship + blitz schedule ───────────────────────────────────────────────
+// type: 'clinical' | 'elective' | 'sprint' | 'blitz'
+// basicSubject: string | null  (null + sprint/blitz = all 6 basics shown)
+// dailyTarget / studyHours: only on blitz blocks
+export const INTERNSHIP_SCHEDULE = [
+  // ── INTERNSHIP YEAR Jul 2026 – Jun 2027 ──────────────────────────────────
+  { id:'BLK-01', start:'2026-07-01', end:'2026-07-12', label:'MED 260',           type:'clinical', primarySubjects:['Internal Medicine','Pharmacology & Therapeutics'], basicSubject:'Pathology' },
+  { id:'BLK-02', start:'2026-07-13', end:'2026-07-26', label:'PEDIA 260',         type:'clinical', primarySubjects:['Pediatrics & Nutrition'],                          basicSubject:'Physiology' },
+  { id:'BLK-03', start:'2026-07-27', end:'2026-08-09', label:'PEDIA 260',         type:'clinical', primarySubjects:['Pediatrics & Nutrition'],                          basicSubject:'Biochemistry' },
+  { id:'BLK-04', start:'2026-08-10', end:'2026-08-23', label:'SURG 260',          type:'clinical', primarySubjects:['Surgery, Ophtha, ENT'],                            basicSubject:'Anatomy & Histology' },
+  { id:'BLK-05', start:'2026-08-24', end:'2026-09-06', label:'SURG 260',          type:'clinical', primarySubjects:['Surgery, Ophtha, ENT'],                            basicSubject:'Microbiology & Parasitology' },
+  { id:'BLK-06', start:'2026-09-07', end:'2026-09-20', label:'SURG 260',          type:'clinical', primarySubjects:['Surgery, Ophtha, ENT'],                            basicSubject:'Legal Med, Jurisprudence & Ethics' },
+  { id:'BLK-07', start:'2026-09-21', end:'2026-10-04', label:'SURG 260',          type:'clinical', primarySubjects:['Surgery, Ophtha, ENT'],                            basicSubject:'Pathology' },
+  { id:'BLK-08', start:'2026-10-05', end:'2026-10-18', label:'FCH 260.1',         type:'clinical', primarySubjects:['Preventive Med & Public Health'],                  basicSubject:'Biochemistry' },
+  { id:'BLK-09', start:'2026-10-20', end:'2026-11-01', label:'[E] MED 292',       type:'elective', primarySubjects:['Internal Medicine'],                               basicSubject:'Physiology',                note:'IC · GI' },
+  { id:'BLK-10', start:'2026-11-02', end:'2026-11-15', label:'[E] MED 292',       type:'elective', primarySubjects:['Internal Medicine'],                               basicSubject:'Anatomy & Histology',       note:'IC · GI' },
+  { id:'BLK-11', start:'2026-11-16', end:'2026-11-29', label:'PEDIA 260',         type:'clinical', primarySubjects:['Pediatrics & Nutrition'],                          basicSubject:'Microbiology & Parasitology' },
+  { id:'BLK-12', start:'2026-11-30', end:'2026-12-13', label:'PEDIA 260',         type:'clinical', primarySubjects:['Pediatrics & Nutrition'],                          basicSubject:'Pathology' },
+  { id:'BLK-13', start:'2026-12-14', end:'2026-12-27', label:'[E] MED 291',       type:'elective', primarySubjects:['Internal Medicine'],                               basicSubject:'Biochemistry',              note:'GI/Cardio Research' },
+  { id:'BLK-14', start:'2026-12-28', end:'2027-01-10', label:'[E] MED 291',       type:'elective', primarySubjects:['Internal Medicine'],                               basicSubject:'Legal Med, Jurisprudence & Ethics', note:'GI/Cardio Research' },
+  { id:'BLK-15', start:'2027-01-11', end:'2027-01-24', label:'FCH 260',           type:'clinical', primarySubjects:['Preventive Med & Public Health'],                  basicSubject:'Physiology' },
+  { id:'BLK-16', start:'2027-01-25', end:'2027-02-07', label:'FCH 260',           type:'clinical', primarySubjects:['Preventive Med & Public Health'],                  basicSubject:'Anatomy & Histology' },
+  { id:'BLK-17', start:'2027-02-08', end:'2027-02-21', label:'FCH 260',           type:'clinical', primarySubjects:['Preventive Med & Public Health'],                  basicSubject:'Microbiology & Parasitology' },
+  { id:'BLK-18', start:'2027-02-22', end:'2027-03-07', label:'OB-GYN 260',        type:'clinical', primarySubjects:['Obstetrics & Gynecology'],                         basicSubject:'Physiology' },
+  { id:'BLK-19', start:'2027-03-08', end:'2027-03-21', label:'OB-GYN 260',        type:'clinical', primarySubjects:['Obstetrics & Gynecology'],                         basicSubject:'Biochemistry' },
+  { id:'BLK-20', start:'2027-03-22', end:'2027-04-04', label:'OB-GYN 260',        type:'clinical', primarySubjects:['Obstetrics & Gynecology'],                         basicSubject:'Anatomy & Histology' },
+  { id:'BLK-21', start:'2027-04-05', end:'2027-04-18', label:'OB-GYN 260',        type:'clinical', primarySubjects:['Obstetrics & Gynecology'],                         basicSubject:'Microbiology & Parasitology' },
+  { id:'BLK-22', start:'2027-04-19', end:'2027-05-02', label:'MED 260',           type:'clinical', primarySubjects:['Internal Medicine','Pharmacology & Therapeutics'], basicSubject:'Pathology' },
+  { id:'BLK-23', start:'2027-05-03', end:'2027-05-16', label:'MED 260',           type:'clinical', primarySubjects:['Internal Medicine','Pharmacology & Therapeutics'], basicSubject:'Legal Med, Jurisprudence & Ethics' },
+  { id:'BLK-24', start:'2027-05-17', end:'2027-05-30', label:'MED 260',           type:'clinical', primarySubjects:['Internal Medicine','Pharmacology & Therapeutics'], basicSubject:'Biochemistry' },
+  { id:'BLK-25', start:'2027-05-31', end:'2027-06-13', label:'[E] Neurosc 291.1', type:'sprint',   primarySubjects:[],                                                   basicSubject:null,                        note:'NSS Research — full basic science sprint' },
+  { id:'BLK-26', start:'2027-06-14', end:'2027-06-30', label:'[E] Neurosc 291.1', type:'sprint',   primarySubjects:[],                                                   basicSubject:null,                        note:'NSS Research — full basic science sprint' },
+  // ── BLITZ PERIOD Jul 2027 – Oct 2027 ─────────────────────────────────────
+  { id:'BLK-27', start:'2027-07-02', end:'2027-07-31', label:'Core Consolidation Blitz', type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:200, studyHours:8, note:'Phase 2: Bridge USMLE logic to PLE patterns. Close coverage gaps across all 12 subjects.' },
+  { id:'BLK-28', start:'2027-08-01', end:'2027-08-31', label:'Dedicated PLE Sprint I',   type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:225, studyHours:8, note:'Phase 3: High-stakes simulation mode. NBME Comp Forms 25–33 + Clinical Mastery.' },
+  { id:'BLK-29', start:'2027-09-01', end:'2027-09-30', label:'Dedicated PLE Sprint II',  type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:250, studyHours:8, note:'Phase 3: Weak zone elimination. Timed mocks + targeted review only.' },
+  { id:'BLK-30', start:'2027-10-01', end:'2027-10-14', label:'Final Pre-Exam Sprint',    type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:250, studyHours:8, note:'Final 2 weeks: simulation review, no new material. Protect sleep.' },
+];

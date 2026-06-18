@@ -1,5 +1,4 @@
 // src/components/kinetix/KinetixWorld.jsx
-import { useState, useEffect } from 'react';
 import SeasonStrip from './SeasonStrip.jsx';
 import PlanTab from './PlanTab.jsx';
 import PacesTab from './PacesTab.jsx';
@@ -8,34 +7,7 @@ import RulesTab from './RulesTab.jsx';
 import StatusTab from './StatusTab.jsx';
 import CharacterTab from '../CharacterTab.jsx';
 
-const TABS = [
-  { id: 'plan',      label: 'Plan'      },
-  { id: 'paces',     label: 'Paces'     },
-  { id: 'strength',  label: 'Strength'  },
-  { id: 'rules',     label: 'Rules'     },
-  { id: 'status',    label: 'Status'    },
-  { id: 'character', label: 'Character' },
-];
-
-export default function KinetixWorld({ doc, commit, navTarget, characterOpen, onTabChange }) {
-  const [tab, setTab] = useState('plan');
-
-  useEffect(() => {
-    if (navTarget?.tab && TABS.some(t => t.id === navTarget.tab)) {
-      setTab(navTarget.tab);
-    }
-  }, [navTarget?.ts]);
-
-  // Sync shared Character tab open state
-  useEffect(() => {
-    if (characterOpen) setTab('character');
-  }, [characterOpen]);
-
-  function handleTabChange(id) {
-    setTab(id);
-    if (onTabChange) onTabChange(id);
-  }
-
+export default function KinetixWorld({ doc, commit, tab }) {
   return (
     <div style={{ overflowY: 'auto', flex: 1 }}>
       <div className="kx-world">
@@ -50,18 +22,6 @@ export default function KinetixWorld({ doc, commit, navTarget, characterOpen, on
         </div>
 
         <SeasonStrip doc={doc} />
-
-        <div className="kx-tabbar">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              className={`kx-tab ${tab === t.id ? 'active' : ''}`}
-              onClick={() => handleTabChange(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
 
         {tab === 'plan'      && <PlanTab     doc={doc} commit={commit} />}
         {tab === 'paces'     && <PacesTab    doc={doc} commit={commit} />}

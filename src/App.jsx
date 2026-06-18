@@ -1,28 +1,11 @@
 // src/App.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useApp } from './state/appStore.jsx';
 import { Store, setToken } from './lib/storage.js';
 import MediWorld from './components/medi/MediWorld.jsx';
 import KinetixWorld from './components/kinetix/KinetixWorld.jsx';
 import TodayWorld from './components/today/TodayWorld.jsx';
-import XpStrip from './components/XpStrip.jsx';
-
-function SyncChip({ status, onOpen }) {
-  const labels = {
-    synced:  { dot: '●', text: 'synced',        cls: 'chip-ok'      },
-    saving:  { dot: '↑', text: 'saving…',       cls: 'chip-saving'  },
-    offline: { dot: '⚠', text: 'offline · cached', cls: 'chip-warn' },
-    auth:    { dot: '⚠', text: 'tap to sign in',   cls: 'chip-warn' },
-    idle:    { dot: '○', text: 'not synced',     cls: 'chip-idle'    },
-  };
-  const l = labels[status] || labels.idle;
-  return (
-    <button className={`sync-chip ${l.cls}`} onClick={onOpen} title="Sync settings">
-      <span className="chip-dot">{l.dot}</span>
-      <span className="chip-text">{l.text}</span>
-    </button>
-  );
-}
+import AppSidebar from './components/AppSidebar.jsx';
 
 function SettingsPopover({ onClose, doc, commit }) {
   const [tokenInput, setTokenInput] = useState(localStorage.getItem('nexus_token') || '');
@@ -100,24 +83,13 @@ function SettingsPopover({ onClose, doc, commit }) {
 export default function App() {
   const { doc, commit, setWorld, syncStatus, loading } = useApp();
   const [showSettings, setShowSettings] = useState(false);
-  const [navTarget, setNavTarget] = useState(null);
-  // Shared Character tab — when true, both worlds open to the character tab
-  const [characterOpen, setCharacterOpen] = useState(false);
+  const [mediTab, setMediTab]       = useState('tracker');
+  const [kinetixTab, setKinetixTab] = useState('plan');
 
   function navigateTo(targetWorld, tab) {
-    setNavTarget({ world: targetWorld, tab, ts: Date.now() });
     setWorld(targetWorld);
-    if (tab === 'character') setCharacterOpen(true);
-    else setCharacterOpen(false);
-  }
-
-  function openCharacter() {
-    setCharacterOpen(true);
-  }
-
-  function onTabChange(tab) {
-    if (tab !== 'character') setCharacterOpen(false);
-    else setCharacterOpen(true);
+    if (targetWorld === 'medi')    setMediTab(tab);
+    if (targetWorld === 'kinetix') setKinetixTab(tab);
   }
 
   if (loading) {
@@ -133,59 +105,27 @@ export default function App() {
 
   return (
     <div className="app-root" data-world={world}>
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <header className="topbar">
-        <div className="topbar-brand">NEXUS</div>
+      <AppSidebar
+        world={world}
+        setWorld={setWorld}
+        mediTab={mediTab}
+        setMediTab={setMediTab}
+        kinetixTab={kinetixTab}
+        setKinetixTab={setKinetixTab}
+        syncStatus={syncStatus}
+        onOpenSettings={() => setShowSettings(true)}
+        doc={doc}
+      />
 
-        <div className="world-toggle">
-          <button
-            className={`wt-btn ${world === 'today' ? 'wt-active' : ''}`}
-            onClick={() => setWorld('today')}
-          >
-            TODAY
-          </button>
-          <button
-            className={`wt-btn ${world === 'medi' ? 'wt-active' : ''}`}
-            onClick={() => setWorld('medi')}
-          >
-            MEDI
-          </button>
-          <button
-            className={`wt-btn ${world === 'kinetix' ? 'wt-active' : ''}`}
-            onClick={() => setWorld('kinetix')}
-          >
-            KINETIX
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {doc.rpg && (
-            <XpStrip doc={doc} onOpenCharacter={openCharacter} />
-          )}
-          <SyncChip status={syncStatus} onOpen={() => setShowSettings(true)} />
-        </div>
-      </header>
-
-      {/* ── World body ───────────────────────────────────────────────────── */}
-      <main className="world-body">
-        {world === 'today' && <TodayWorld doc={doc} commit={commit} onNavigate={navigateTo} />}
+      <main className="app-content">
+        {world === 'today' && (
+          <TodayWorld doc={doc} commit={commit} onNavigate={navigateTo} />
+        )}
         {world === 'medi' && (
-          <MediWorld
-            doc={doc}
-            commit={commit}
-            navTarget={navTarget?.world === 'medi' ? navTarget : null}
-            characterOpen={characterOpen}
-            onTabChange={onTabChange}
-          />
+          <MediWorld doc={doc} commit={commit} tab={mediTab} setTab={setMediTab} />
         )}
         {world === 'kinetix' && (
-          <KinetixWorld
-            doc={doc}
-            commit={commit}
-            navTarget={navTarget?.world === 'kinetix' ? navTarget : null}
-            characterOpen={characterOpen}
-            onTabChange={onTabChange}
-          />
+          <KinetixWorld doc={doc} commit={commit} tab={kinetixTab} />
         )}
       </main>
 

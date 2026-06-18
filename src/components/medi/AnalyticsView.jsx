@@ -1,10 +1,12 @@
 // src/components/medi/AnalyticsView.jsx
+import { useState } from 'react';
 import {
   globalStats, velocityStats, projectionStats, calcStreak,
   weakZones, weakThreshold, subjectStats, calcReadiness,
   daysToExam
 } from '../../lib/medi.logic.js';
 import { CATALOG, SUBJECT_ORDER, CAT_TO_SUBJECT } from '../../lib/medi.data.js';
+import VelocityChart from './VelocityChart.jsx';
 
 function colorScore(v) {
   return v >= 75 ? 'text-ok' : v >= 60 ? 'text-warn' : 'text-danger';
@@ -83,13 +85,16 @@ function KPIs({ state, rotationExams }) {
 
 // ── Heatmap ──────────────────────────────────────────────────────────────────
 function Heatmap({ state }) {
+  const [tooltip, setTooltip] = useState(null);
   const target = state.dailyTargetMetrics.questionsPerDayTarget || 40;
   const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  const WEEKS = 52;
   const startDay = new Date(today);
-  startDay.setDate(startDay.getDate() - 111 - today.getDay()); // back to Sunday
+  startDay.setDate(startDay.getDate() - (WEEKS - 1) * 7 - today.getDay());
 
   const weeks = [];
-  for (let w = 0; w < 16; w++) {
+  for (let w = 0; w < WEEKS; w++) {
     const days = [];
     for (let d = 0; d < 7; d++) {
       const dt = new Date(startDay);
@@ -109,8 +114,21 @@ function Heatmap({ state }) {
     weeks.push(days);
   }
 
+  // Build month label row: show month label at the first column whose Sunday is a new month
+  const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthLabels = weeks.map(days => {
+    const sun = days[0].dt;
+    if (sun.getDate() <= 7) return MONTH_SHORT[sun.getMonth()];
+    return '';
+  });
+
   return (
-    <div className="heatmap-wrap">
+    <div className="heatmap-wrap" style={{ position: 'relative' }}>
+      <div className="hm-month-row">
+        {monthLabels.map((lbl, i) => (
+          <div key={i} className="hm-month-label">{lbl}</div>
+        ))}
+      </div>
       <div className="heatmap-grid">
         {weeks.map((days, wi) => (
           <div key={wi} className="hm-col">
@@ -118,12 +136,23 @@ function Heatmap({ state }) {
               <div
                 key={di}
                 className={`hm-cell ${day.isFuture ? 'hm-future' : `hm-${day.level}`}`}
-                title={day.dt.toLocaleDateString() + ': ' + day.v + ' Qs'}
+                onMouseEnter={e => setTooltip({
+                  x: e.currentTarget.getBoundingClientRect().left,
+                  y: e.currentTarget.getBoundingClientRect().top,
+                  text: day.dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        + (day.isFuture ? '' : ` · ${day.v} Qs`)
+                })}
+                onMouseLeave={() => setTooltip(null)}
               />
             ))}
           </div>
         ))}
       </div>
+      {tooltip && (
+        <div className="hm-tooltip" style={{ top: -36, left: 0, pointerEvents: 'none' }}>
+          {tooltip.text}
+        </div>
+      )}
     </div>
   );
 }
@@ -301,70 +330,14 @@ export default function AnalyticsView({ doc }) {
 
   return (
     <div className="analytics-view">
-      <KPIs state={state} rotationExams={rotationExams} />
-
-      {/* Heatmap + Radar */}
-      <div className="an-cols">
+      {/* ── Left column ── */}
+      <div className="an-col-left">
+        <KPIs state={state} rotationExams={rotationExams} />
+        <VelocityChart state={state} />
         <div className="an-panel">
-          <div className="an-panel-title">16-Week Study Heatmap</div>
+          <div className="an-panel-title">52-Week Study Heatmap</div>
           <Heatmap state={state} />
         </div>
-        <div className="an-panel">
-          <div className="an-panel-title">Subject Radar</div>
-          <Radar state={state} />
-        </div>
-      </div>
-
-      {/* Weak zones + Sparklines + Category */}
-      <div className="an-cols-3">
-        <div className="an-panel">
-          <div className="an-panel-title">
-            Weak Zones
-            <span style={{ color: '#F59E0B', marginLeft: 6, fontSize: '0.68rem' }}>
-              &lt;{thr}%{thr === 85 ? ' — Phase 3' : ''}
-            </span>
-          </div>
-          {wz.length === 0
-            ? <div className="empty-state">No weak zones below {thr}%.</div>
-            : wz.slice(0, 10).map(m => {
-                const s = state.modules[m.id];
-                const pct = m.totalQuestions ? s.completedQuestions / m.totalQuestions * 100 : 0;
-                return (
-                  <div key={m.id} className="wz-row">
-                    <span className="wz-name">{m.name}</span>
-                    <span className="wz-pct">{pct.toFixed(0)}% done</span>
-                    <span className={`wz-score ${colorScore(s.userPerformanceScore || 0)}`}>
-                      {(s.userPerformanceScore || 0).toFixed(0)}%
-                    </span>
-                  </div>
-                );
-              })}
-        </div>
-
-        <div className="an-panel">
-          <div className="an-panel-title">Score Sparklines</div>
-          <Sparklines state={state} />
-        </div>
-
-        <div className="an-panel">
-          <div className="an-panel-title">Category Breakdown</div>
-          {catData.map(cd => (
-            <div key={cd.cat} className="cat-row">
-              <span className="cat-name">{cd.shortLabel}</span>
-              <div className="cat-bar-wrap">
-                <div className="cat-bar-fill" style={{ width: cd.pct + '%', background: colorBar(cd.pct) }} />
-              </div>
-              <span className="cat-pct">{cd.pct.toFixed(0)}%</span>
-              <span className={`cat-score ${cd.avgScore !== null ? colorScore(cd.avgScore) : 'text-muted'}`}>
-                {cd.avgScore !== null ? cd.avgScore.toFixed(0) + '%' : '—'}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pace + Readiness */}
-      <div className="an-cols">
         <div className="an-panel">
           <div className="an-panel-title">Pace Analysis</div>
           <div className="pace-stat-row">
@@ -392,9 +365,9 @@ export default function AnalyticsView({ doc }) {
             }} />
           </div>
           <div className="pace-stat-row">
-            <span className="pace-stat-label">Projected finish (7d pace)</span>
+            <span className="pace-stat-label">Projected finish</span>
             <span className={`pace-stat-value ${projDate && projDate < new Date('2027-10-15') ? 'text-ok' : 'text-danger'}`}>
-              {projDate ? projDate.toLocaleDateString() + (projDate < new Date('2027-10-15') ? ' ✓ Before exam' : ' ⚠ AFTER EXAM') : '∞'}
+              {projDate ? projDate.toLocaleDateString() + (projDate < new Date('2027-10-15') ? ' ✓' : ' ⚠ LATE') : '∞'}
             </span>
           </div>
           <div className="pace-stat-row">
@@ -402,7 +375,56 @@ export default function AnalyticsView({ doc }) {
             <span className="pace-stat-value">{(g.total - g.done).toLocaleString()} Qs</span>
           </div>
         </div>
+      </div>
 
+      {/* ── Right column ── */}
+      <div className="an-col-right">
+        <div className="an-panel">
+          <div className="an-panel-title">Subject Radar</div>
+          <Radar state={state} />
+        </div>
+        <div className="an-panel">
+          <div className="an-panel-title">
+            Weak Zones
+            <span style={{ color: '#F59E0B', marginLeft: 6, fontSize: '0.68rem' }}>
+              &lt;{thr}%{thr === 85 ? ' — Phase 3' : ''}
+            </span>
+          </div>
+          {wz.length === 0
+            ? <div className="empty-state">No weak zones below {thr}%.</div>
+            : wz.slice(0, 10).map(m => {
+                const s = state.modules[m.id];
+                const pct = m.totalQuestions ? s.completedQuestions / m.totalQuestions * 100 : 0;
+                return (
+                  <div key={m.id} className="wz-row">
+                    <span className="wz-name">{m.name}</span>
+                    <span className="wz-pct">{pct.toFixed(0)}% done</span>
+                    <span className={`wz-score ${colorScore(s.userPerformanceScore || 0)}`}>
+                      {(s.userPerformanceScore || 0).toFixed(0)}%
+                    </span>
+                  </div>
+                );
+              })}
+        </div>
+        <div className="an-panel">
+          <div className="an-panel-title">Score Sparklines</div>
+          <Sparklines state={state} />
+        </div>
+        <div className="an-panel">
+          <div className="an-panel-title">Category Breakdown</div>
+          {catData.map(cd => (
+            <div key={cd.cat} className="cat-row">
+              <span className="cat-name">{cd.shortLabel}</span>
+              <div className="cat-bar-wrap">
+                <div className="cat-bar-fill" style={{ width: cd.pct + '%', background: colorBar(cd.pct) }} />
+              </div>
+              <span className="cat-pct">{cd.pct.toFixed(0)}%</span>
+              <span className={`cat-score ${cd.avgScore !== null ? colorScore(cd.avgScore) : 'text-muted'}`}>
+                {cd.avgScore !== null ? cd.avgScore.toFixed(0) + '%' : '—'}
+              </span>
+            </div>
+          ))}
+        </div>
         <div className="an-panel">
           <div className="an-panel-title">PLE Readiness</div>
           <ReadinessRing state={state} rotationExams={rotationExams} />

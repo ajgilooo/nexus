@@ -91,7 +91,8 @@ export function freshState() {
     questionLogs: [],
     examLog: [],
     modules,
-    pipeline
+    pipeline,
+    dutyRoster: {}
   };
 }
 

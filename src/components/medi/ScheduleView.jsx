@@ -1,16 +1,18 @@
 // src/components/medi/ScheduleView.jsx
 import { useState } from 'react';
-import OverviewView from './schedule/OverviewView.jsx';
-import CalendarView from './schedule/CalendarView.jsx';
-import GanttView    from './schedule/GanttView.jsx';
+import OverviewView    from './schedule/OverviewView.jsx';
+import CalendarView    from './schedule/CalendarView.jsx';
+import GanttView       from './schedule/GanttView.jsx';
+import DutyRosterView  from './schedule/DutyRosterView.jsx';
 
 const MODES = [
-  { id: 'overview',  label: 'Overview' },
-  { id: 'calendar',  label: 'Calendar' },
-  { id: 'gantt',     label: 'Timeline' },
+  { id: 'overview',  label: 'Overview'  },
+  { id: 'calendar',  label: 'Calendar'  },
+  { id: 'gantt',     label: 'Timeline'  },
+  { id: 'duty',      label: 'Duty Roster' },
 ];
 
-export default function ScheduleView({ doc }) {
+export default function ScheduleView({ doc, commit }) {
   const [mode, setMode] = useState('overview');
   const state = doc.medi.state;
 
@@ -29,9 +31,10 @@ export default function ScheduleView({ doc }) {
       </div>
 
       <div className="schedule-view-content">
-        {mode === 'overview' && <OverviewView state={state} />}
-        {mode === 'calendar' && <CalendarView state={state} />}
-        {mode === 'gantt'    && <GanttView    state={state} />}
+        {mode === 'overview'  && <OverviewView   state={state} />}
+        {mode === 'calendar'  && <CalendarView   state={state} />}
+        {mode === 'gantt'     && <GanttView      state={state} />}
+        {mode === 'duty'      && <DutyRosterView doc={doc} commit={commit} />}
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export default function MediWorld({ doc, commit, tab, setTab }) {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
       {tab === 'tracker'   && <TrackerView   doc={doc} commit={commit} tick={tick} />}
       {tab === 'analytics' && <AnalyticsView  doc={doc} commit={commit} tick={tick} />}
-      {tab === 'schedule'  && <ScheduleView   doc={doc} />}
+      {tab === 'schedule'  && <ScheduleView   doc={doc} commit={commit} />}
       {tab === 'ple'       && <PleView        doc={doc} commit={commit} />}
       {tab === 'character' && <div style={{ flex: 1, overflowY: 'auto' }}><CharacterTab doc={doc} commit={commit} /></div>}
     </div>

@@ -5,6 +5,7 @@ import { CATALOG, SYSTEMS, PIPELINE, CATEGORIES, BLOCK_PROTOCOL } from '../../li
 import { blockForDate, dayDiff, padDate } from './schedule/scheduleHelpers.js';
 import { Store } from '../../lib/storage.js';
 import QLogModal from './QLogModal.jsx';
+import SelfAssessModal from './SelfAssessModal.jsx';
 
 // todayKey inline (avoids import just for this)
 const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
@@ -26,7 +27,7 @@ function blockPhase(block, todayStr) {
   return 'bank';
 }
 
-function TodayStudyBrief({ state }) {
+function TodayStudyBrief({ state, onSA }) {
   const now      = new Date();
   const todayStr = padDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
   const block    = blockForDate(now);
@@ -88,12 +89,16 @@ function TodayStudyBrief({ state }) {
       ) : (
         <div className="tsb-no-block">No active rotation today.</div>
       )}
+
+      <button className="tsb-sa-btn" onClick={onSA}>
+        → Self-Assessment Picker
+      </button>
     </div>
   );
 }
 
 // ── LEFT PANE ────────────────────────────────────────────────────────────────
-function LeftStats({ doc, commit, onOpenLog }) {
+function LeftStats({ doc, commit, onOpenLog, onOpenSA }) {
   const state = doc.medi.state;
   const g = globalStats(state);
   const days = daysToExam();
@@ -134,7 +139,7 @@ function LeftStats({ doc, commit, onOpenLog }) {
 
   return (
     <div>
-      <TodayStudyBrief state={doc.medi.state} />
+      <TodayStudyBrief state={doc.medi.state} onSA={onOpenSA} />
 
       <div className="stat-block">
         <div className="stat-label">Days to PLE</div>
@@ -476,10 +481,11 @@ function CatalogPane({ doc, commit }) {
 // ── TRACKER VIEW ─────────────────────────────────────────────────────────────
 export default function TrackerView({ doc, commit }) {
   const [showLog, setShowLog] = useState(false);
+  const [showSA,  setShowSA]  = useState(false);
   return (
     <div className="tracker-grid">
       <div className="tracker-pane pane-left">
-        <LeftStats doc={doc} commit={commit} onOpenLog={() => setShowLog(true)} />
+        <LeftStats doc={doc} commit={commit} onOpenLog={() => setShowLog(true)} onOpenSA={() => setShowSA(true)} />
       </div>
       <div className="tracker-pane pane-middle">
         <PipelinePane doc={doc} commit={commit} />
@@ -488,6 +494,7 @@ export default function TrackerView({ doc, commit }) {
         <CatalogPane doc={doc} commit={commit} />
       </div>
       {showLog && <QLogModal doc={doc} commit={commit} onClose={() => setShowLog(false)} />}
+      {showSA  && <SelfAssessModal doc={doc} commit={commit} onClose={() => setShowSA(false)} />}
     </div>
   );
 }

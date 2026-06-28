@@ -44,8 +44,9 @@ function storeTokens({ access_token, refresh_token, expires_in }) {
 }
 
 // ── Redirect URI ──────────────────────────────────────────────────────────────
+// Always origin + '/' — SPA lives at root, no path manipulation needed.
 export function redirectUri() {
-  return window.location.origin + window.location.pathname.replace(/\/$/, '') + '/';
+  return window.location.origin + '/';
 }
 
 // ── OAuth: start (redirect to Google) ────────────────────────────────────────

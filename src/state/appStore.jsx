@@ -34,7 +34,8 @@ function defaultDoc() {
       xpLedgerCache: { lifetimeXP: 0, computedAt: 0 }
     },
     duty: { mode: null, setAt: null },
-    todos: []
+    todos: [],
+    kanban: { boards: {} },
   };
 }
 
@@ -167,6 +168,9 @@ function migrate(raw) {
   // Duty + todos (v5)
   doc.duty = { mode: null, setAt: null, ...(raw.duty || {}) };
   if (!Array.isArray(doc.todos)) doc.todos = [];
+
+  // Kanban
+  if (!doc.kanban || typeof doc.kanban.boards !== 'object') doc.kanban = { boards: {} };
 
   return doc;
 }

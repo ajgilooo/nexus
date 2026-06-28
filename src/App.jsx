@@ -8,6 +8,7 @@ import KinetixWorld from './components/kinetix/KinetixWorld.jsx';
 import TodayWorld from './components/today/TodayWorld.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
 import GCalSync from './components/GCalSync.jsx';
+import KanbanBoard from './components/KanbanBoard.jsx';
 
 function SettingsPopover({ onClose, doc, commit }) {
   const [tokenInput, setTokenInput] = useState(localStorage.getItem('nexus_token') || '');
@@ -139,6 +140,9 @@ export default function App() {
         )}
         {world === 'kinetix' && (
           <KinetixWorld doc={doc} commit={commit} tab={kinetixTab} />
+        )}
+        {world === 'plan' && (
+          <KanbanBoard doc={doc} commit={commit} />
         )}
       </main>
 

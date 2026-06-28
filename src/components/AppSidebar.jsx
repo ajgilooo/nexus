@@ -22,6 +22,7 @@ const WORLDS = [
   { id: 'today',   label: 'TODAY'   },
   { id: 'medi',    label: 'MEDI'    },
   { id: 'kinetix', label: 'KINETIX' },
+  { id: 'plan',    label: 'PLAN'    },
 ];
 
 function SyncChip({ status, onOpen }) {

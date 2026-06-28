@@ -279,6 +279,61 @@ function kinetix_weekEvents() {
   });
 }
 
+// ── Kanban week sync ─────────────────────────────────────────────────────────
+// Creates timed GCal events for one week from the kanban board.
+// Cards are stacked sequentially within each day by their default hour.
+export async function syncKanbanWeek(weekStr, days, onProgress) {
+  const token = await getAccessToken();
+
+  onProgress('Clearing previous kanban events for this week…');
+  const rmIds = [];
+  const endWk = addDays(weekStr, 7);
+  const qs = new URLSearchParams({
+    privateExtendedProperty: `nexusKanban=${weekStr}`,
+    timeMin: weekStr + 'T00:00:00Z',
+    timeMax: endWk   + 'T00:00:00Z',
+    maxResults: '100', singleEvents: 'true',
+  });
+  const existing = await apiFetch('GET', `/calendars/primary/events?${qs}`, null, token);
+  (existing?.items || []).forEach(e => rmIds.push(e.id));
+  await throttled(rmIds.map(id => () =>
+    apiFetch('DELETE', `/calendars/primary/events/${id}`, null, token).catch(() => {})
+  ), 8, 100);
+
+  const events = [];
+  const pad = n => String(n).padStart(2, '0');
+  for (const [dayStr, cards] of Object.entries(days)) {
+    if (!cards?.length) continue;
+    const sorted = [...cards].sort((a, b) => (a.hr || 8) - (b.hr || 8));
+    let cursor = 0;
+    for (const card of sorted) {
+      const startMin = Math.max((card.hr || 8) * 60, cursor);
+      const endMin   = startMin + (card.dur || 60);
+      events.push({
+        summary:     `NEXUS · ${card.title}`,
+        description: card.desc || '',
+        colorId:     String(card.cid || '11'),
+        start: { dateTime: `${dayStr}T${pad(Math.floor(startMin/60))}:${pad(startMin%60)}:00`, timeZone: 'Asia/Manila' },
+        end:   { dateTime: `${dayStr}T${pad(Math.floor(endMin/60))}:${pad(endMin%60)}:00`,     timeZone: 'Asia/Manila' },
+        extendedProperties: { private: { nexusKanban: weekStr } },
+      });
+      cursor = endMin;
+    }
+  }
+
+  onProgress(`Pushing ${events.length} events…`);
+  let pushed = 0;
+  await throttled(
+    events.map(ev => async () => {
+      await apiFetch('POST', '/calendars/primary/events', ev, token);
+      pushed++;
+      onProgress(`Pushing… ${pushed}/${events.length}`);
+    }),
+    5, 200,
+  );
+  return { deleted: rmIds.length, pushed };
+}
+
 // ── Master sync ───────────────────────────────────────────────────────────────
 export async function syncAll(dutyRoster, onProgress) {
   const token = await getAccessToken();

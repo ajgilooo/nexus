@@ -280,3 +280,21 @@ export const INTERNSHIP_SCHEDULE = [
   { id:'BLK-29', start:'2027-09-01', end:'2027-09-30', label:'Dedicated PLE Sprint II',  type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:250, studyHours:8, note:'Phase 3: Weak zone elimination. Timed mocks + targeted review only.' },
   { id:'BLK-30', start:'2027-10-01', end:'2027-10-14', label:'Final Pre-Exam Sprint',    type:'blitz', primarySubjects:_ALL, basicSubject:null, dailyTarget:250, studyHours:8, note:'Final 2 weeks: simulation review, no new material. Protect sleep.' },
 ];
+
+// Maps rotation block label → pre-assessment / qbank-daily / post-assessment study resources.
+// Used by DutyRosterView (protocol reference) and TrackerView (today's brief).
+export const BLOCK_PROTOCOL = {
+  'MED 260':                { pre:'Amboss 200 Concepts S1 (cardio/pulm/renal)',            bank:'UWorld S2 IM + Mehlman HY Internal Medicine',               post:'Medicine SA Forms 5–10' },
+  'PEDIA 260':              { pre:'PassMedicine S1 (peds/genetics)',                       bank:'UWorld S2 Peds + Mehlman HY Pediatrics',                    post:'Pediatrics SA Forms 5–9' },
+  'SURG 260':               { pre:'USMLERx S1 (trauma/GI anatomy)',                        bank:'UWorld S2 Surgery + Mehlman HY Surgery + HY Emergency Med', post:'Surgery SA Forms 5–8' },
+  'FCH 260.1':              { pre:'Amboss HY Biostatistics & Epidemiology',                bank:'UWorld S1 biostat + Mehlman HY Family Med + PH-LOCAL',      post:'Family Medicine SA Forms 2–4' },
+  'FCH 260':                { pre:'Amboss S3 (ethics/QI/patient safety)',                  bank:'Amboss S3 + Legal Med Local + leftover UWorld S1/S2',        post:'Emergency Med SA Forms 1–3' },
+  'OB-GYN 260':             { pre:'USMLERx S1 (repro/endo)',                               bank:'UWorld S2 OB-Gyn + Mehlman HY ObGyn',                       post:'Clinical OB-Gyn SA Forms 5–10' },
+  '[E] MED 292':            { pre:'Amboss 200 Concepts S2 (GI/cardio)',                    bank:'UWorld S2 IM + Mehlman HY IM (GI/cardio focus)',             post:'Medicine SA Forms 7–9' },
+  '[E] MED 291':            { pre:'Amboss 200 Concepts S2 (GI)',                           bank:'UWorld S2 GI + Mehlman HY IM (GI focus)',                    post:'Medicine SA Form 7' },
+  '[E] Neurosc 291.1':      { pre:'All 6 basic sciences (full sprint)',                    bank:'UWorld S1 reset + Amboss S1 basic science',                  post:'NBME Comp Basic Science Forms 25–33' },
+  'Core Consolidation Blitz': { pre:'Amboss 200 Concepts (mixed — all subjects)',          bank:'UWorld S2 + Amboss S3 (mixed — bridge to PLE)',              post:'NBME Comp + Clinical Mastery forms' },
+  'Dedicated PLE Sprint I':   { pre:'NBME Comp Forms 25–29 (timed simulation)',            bank:'UWorld S2 incorrects reset + Amboss S3',                    post:'NBME Comp Forms 30–33 + Subject Exams' },
+  'Dedicated PLE Sprint II':  { pre:'Weak zone targeted review (Analytics → Radar)',       bank:'Local Q-banks + Mehlman HY (all subjects)',                  post:'Clinical Mastery forms + Subject Exams' },
+  'Final Pre-Exam Sprint':    { pre:'Mehlman HY (all subjects) — review only',             bank:'Timed mocks — no new material, pure recall',                post:'uWorld + NBME Self-Assessments' },
+};

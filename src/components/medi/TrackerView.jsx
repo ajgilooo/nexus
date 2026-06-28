@@ -1,12 +1,96 @@
 // src/components/medi/TrackerView.jsx
 import { useState, useRef } from 'react';
 import { daysToExam, activePhase, recommendedDailyTarget, globalStats, freshState } from '../../lib/medi.logic.js';
-import { CATALOG, SYSTEMS, PIPELINE, CATEGORIES } from '../../lib/medi.data.js';
+import { CATALOG, SYSTEMS, PIPELINE, CATEGORIES, BLOCK_PROTOCOL } from '../../lib/medi.data.js';
+import { blockForDate, dayDiff, padDate } from './schedule/scheduleHelpers.js';
 import { Store } from '../../lib/storage.js';
 import QLogModal from './QLogModal.jsx';
 
 // todayKey inline (avoids import just for this)
 const todayKey = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+
+// ── TODAY'S STUDY BRIEF ───────────────────────────────────────────────────────
+const DUTY_CFG = {
+  pre:  { label:'Pre-Duty',  fresh:45, resurf:0,  short:0,  col:'#60A5FA' },
+  duty: { label:'On Duty',   fresh:0,  resurf:0,  short:25, col:'#F87171' },
+  post: { label:'Post-Duty', fresh:50, resurf:30, short:0,  col:'#34D399' },
+  off:  { label:'Off',       fresh:20, resurf:10, short:0,  col:'#94A3B8' },
+};
+const PHASE_LABEL = { pre:'Pre-Assessment', bank:'QBank Daily', post:'Post-Assessment' };
+
+function blockPhase(block, todayStr) {
+  const dayIn  = dayDiff(block.start, todayStr);
+  const len    = dayDiff(block.start, block.end) + 1;
+  if (dayIn <= 1)        return 'pre';
+  if (dayIn >= len - 2)  return 'post';
+  return 'bank';
+}
+
+function TodayStudyBrief({ state }) {
+  const now      = new Date();
+  const todayStr = padDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const block    = blockForDate(now);
+  const mode     = state.dutyRoster?.[todayStr] || null;
+  const duty     = mode ? DUTY_CFG[mode] : null;
+
+  let phase = null, resource = null;
+  if (block) {
+    const proto = BLOCK_PROTOCOL[block.label];
+    phase    = blockPhase(block, todayStr);
+    resource = proto?.[phase] ?? proto?.bank ?? null;
+  }
+
+  const total = duty ? duty.fresh + duty.resurf + duty.short : null;
+  const dayIn = block ? dayDiff(block.start, todayStr) + 1 : null;
+  const len   = block ? dayDiff(block.start, block.end) + 1 : null;
+
+  return (
+    <div className="tsb-card">
+      <div className="tsb-header">
+        <span className="tsb-title">Today's Brief</span>
+        <span className="tsb-date">{now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' })}</span>
+      </div>
+
+      {block ? (
+        <>
+          <div className="tsb-block-row">
+            <span className="tsb-block-label">{block.label}</span>
+            <span className="tsb-block-sub">Day {dayIn}/{len} · {PHASE_LABEL[phase]}</span>
+          </div>
+
+          {resource && (
+            <div className="tsb-resource">
+              <div className="tsb-res-phase">{PHASE_LABEL[phase]}</div>
+              <div className="tsb-res-text">{resource}</div>
+            </div>
+          )}
+
+          {duty ? (
+            <div className="tsb-duty" style={{ '--dc': duty.col }}>
+              <span className="tsb-duty-badge">{duty.label}</span>
+              <div className="tsb-q-chips">
+                {duty.fresh  > 0 && <span className="tsb-chip">{duty.fresh} fresh</span>}
+                {duty.resurf > 0 && <span className="tsb-chip">{duty.resurf} resurface</span>}
+                {duty.short  > 0 && <span className="tsb-chip">{duty.short} short sets</span>}
+                <span className="tsb-chip tsb-chip-total">{total} Qs</span>
+              </div>
+            </div>
+          ) : (
+            <div className="tsb-no-duty">
+              Duty mode not set — go to Schedule → Duty Roster and paint today.
+            </div>
+          )}
+
+          {block.basicSubject && (
+            <div className="tsb-basic-sci">Basic sci: {block.basicSubject}</div>
+          )}
+        </>
+      ) : (
+        <div className="tsb-no-block">No active rotation today.</div>
+      )}
+    </div>
+  );
+}
 
 // ── LEFT PANE ────────────────────────────────────────────────────────────────
 function LeftStats({ doc, commit, onOpenLog }) {
@@ -50,6 +134,8 @@ function LeftStats({ doc, commit, onOpenLog }) {
 
   return (
     <div>
+      <TodayStudyBrief state={doc.medi.state} />
+
       <div className="stat-block">
         <div className="stat-label">Days to PLE</div>
         <div className="stat-value days-value">{days}</div>

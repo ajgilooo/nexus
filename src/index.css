@@ -2235,3 +2235,30 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 /* Empty column hint */
 .kb-empty-hint { font-size: 0.58rem; color: rgba(255,255,255,0.1); text-align: center; padding: 14px 0; pointer-events: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TODAY'S STUDY BRIEF  (TrackerView.jsx · TodayStudyBrief)
+   ══════════════════════════════════════════════════════════════════════════════ */
+.tsb-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 9px; }
+
+.tsb-header { display: flex; align-items: center; justify-content: space-between; }
+.tsb-title  { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
+.tsb-date   { font-size: 0.6rem; color: var(--muted); font-family: var(--font-mono); }
+
+.tsb-block-row  { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tsb-block-label { font-size: 0.82rem; font-weight: 800; color: var(--text); }
+.tsb-block-sub   { font-size: 0.6rem; color: var(--muted); }
+
+.tsb-resource { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); border-radius: 7px; padding: 8px 10px; }
+.tsb-res-phase { font-size: 0.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #10B981; margin-bottom: 4px; }
+.tsb-res-text  { font-size: 0.72rem; font-weight: 600; color: #e2e8f0; line-height: 1.45; }
+
+.tsb-duty { display: flex; flex-direction: column; gap: 5px; }
+.tsb-duty-badge { display: inline-flex; font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dc, #94A3B8); background: color-mix(in srgb, var(--dc, #94A3B8) 15%, transparent); border: 1px solid color-mix(in srgb, var(--dc, #94A3B8) 30%, transparent); border-radius: 5px; padding: 2px 8px; align-self: flex-start; }
+.tsb-q-chips    { display: flex; flex-wrap: wrap; gap: 4px; }
+.tsb-chip       { font-size: 0.62rem; font-weight: 700; color: var(--text); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 5px; padding: 2px 8px; font-family: var(--font-mono); }
+.tsb-chip-total { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); color: #f8fafc; }
+
+.tsb-basic-sci { font-size: 0.6rem; color: #64748b; }
+.tsb-no-duty   { font-size: 0.65rem; color: var(--muted); font-style: italic; line-height: 1.4; }
+.tsb-no-block  { font-size: 0.65rem; color: var(--muted); }

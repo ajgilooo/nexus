@@ -1,7 +1,7 @@
 // src/components/medi/SelfAssessModal.jsx
 // Recommends + logs NBME Self-Assessment forms based on the current rotation block.
 import { useState } from 'react';
-import { CATALOG } from '../../lib/medi.data.js';
+import { CATALOG, INTERNSHIP_SCHEDULE } from '../../lib/medi.data.js';
 import { blockForDate, dayDiff, padDate } from './schedule/scheduleHelpers.js';
 
 // Ordered SA form IDs for each rotation block — the sequence to work through.
@@ -139,12 +139,29 @@ export default function SelfAssessModal({ doc, commit, onClose }) {
   const dayIn = block ? dayDiff(block.start, todayStr()) + 1 : null;
   const len   = block ? dayDiff(block.start, block.end) + 1 : null;
 
-  // Forms for current block
-  const blockIds   = block ? (BLOCK_SA_IDS[block.label] || []) : [];
-  const blockForms = blockIds.map(id => CATALOG_MAP[id]).filter(Boolean);
+  // Upcoming block starting within the next 7 days (different from current)
+  const nextBlock = INTERNSHIP_SCHEDULE.find(b => {
+    const msUntil = new Date(b.start + 'T00:00:00') - now;
+    return msUntil > 0 && msUntil <= 7 * 86400000 && b.id !== block?.id;
+  }) || null;
+  const daysUntilNext = nextBlock
+    ? Math.ceil((new Date(nextBlock.start + 'T00:00:00') - now) / 86400000)
+    : null;
 
-  // First untaken = recommendation
-  const recForm = blockForms.find(f => !isTaken(examLog, f.id, f.name)) || null;
+  // Forms for current + upcoming blocks
+  const blockIds   = block    ? (BLOCK_SA_IDS[block.label]    || []) : [];
+  const nextIds    = nextBlock ? (BLOCK_SA_IDS[nextBlock.label] || []) : [];
+  const blockForms = blockIds.map(id => CATALOG_MAP[id]).filter(Boolean);
+  const nextForms  = nextIds.map(id => CATALOG_MAP[id]).filter(Boolean)
+    .filter(f => !blockIds.includes(f.id)); // dedupe if same label
+
+  // First untaken = recommendation (current block first, then upcoming)
+  const recForm =
+    blockForms.find(f => !isTaken(examLog, f.id, f.name)) ||
+    nextForms.find(f => !isTaken(examLog, f.id, f.name))  ||
+    null;
+
+  const totalBlockCount = blockForms.length + nextForms.length;
 
   // All SA forms across the catalog
   const SA_CATS = ['NBME - Clinical Mastery','NBME - Comp. Basic Science (Step 1)',
@@ -191,7 +208,13 @@ export default function SelfAssessModal({ doc, commit, onClose }) {
           <div>
             <div className="sam-title">Self-Assessment</div>
             {block && (
-              <div className="sam-subtitle">{block.label} · Day {dayIn}/{len}</div>
+              <div className="sam-subtitle">
+                {block.label} · Day {dayIn}/{len}
+                {nextBlock && ` · ${nextBlock.label} in ${daysUntilNext}d`}
+              </div>
+            )}
+            {!block && nextBlock && (
+              <div className="sam-subtitle">{nextBlock.label} starts in {daysUntilNext} day{daysUntilNext !== 1 ? 's' : ''}</div>
             )}
           </div>
           <button className="sam-close" onClick={onClose}>✕</button>
@@ -200,7 +223,7 @@ export default function SelfAssessModal({ doc, commit, onClose }) {
         {/* Tabs */}
         <div className="sam-tabs">
           <button className={`sam-tab${tab === 'block' ? ' sam-tab-active' : ''}`} onClick={() => setTab('block')}>
-            This Block {blockForms.length > 0 ? `(${blockForms.length})` : ''}
+            This Block {totalBlockCount > 0 ? `(${totalBlockCount})` : ''}
           </button>
           <button className={`sam-tab${tab === 'all' ? ' sam-tab-active' : ''}`} onClick={() => setTab('all')}>
             All Forms
@@ -214,25 +237,50 @@ export default function SelfAssessModal({ doc, commit, onClose }) {
           {/* Block tab */}
           {tab === 'block' && (
             <>
-              {!block && (
-                <div className="sam-empty">No active rotation block today.</div>
+              {!block && !nextBlock && (
+                <div className="sam-empty">No active or upcoming rotation block in the next 7 days.</div>
+              )}
+
+              {/* Current block */}
+              {blockForms.length > 0 && (
+                <div className="sam-form-list">
+                  {block && (
+                    <div className="sam-section-hdr">
+                      <span className="sam-section-tag sam-tag-current">NOW</span>
+                      {block.label} · Day {dayIn}/{len}
+                    </div>
+                  )}
+                  {blockForms.map(form => (
+                    <FormRow key={form.id} form={form}
+                      isRec={recForm?.id === form.id}
+                      taken={isTaken(examLog, form.id, form.name)}
+                      entry={takenEntry(examLog, form.id, form.name)}
+                      {...rowProps} />
+                  ))}
+                </div>
               )}
               {block && blockForms.length === 0 && (
                 <div className="sam-empty">No mapped SA forms for {block.label}. Check All Forms tab.</div>
               )}
-              {blockForms.length > 0 && (
+
+              {/* Upcoming block within 7 days */}
+              {nextForms.length > 0 && (
                 <div className="sam-form-list">
-                  {blockForms.map(form => (
-                    <FormRow
-                      key={form.id}
-                      form={form}
+                  <div className="sam-section-hdr">
+                    <span className="sam-section-tag sam-tag-upcoming">IN {daysUntilNext}d</span>
+                    {nextBlock.label} · starts {nextBlock.start}
+                  </div>
+                  {nextForms.map(form => (
+                    <FormRow key={form.id} form={form}
                       isRec={recForm?.id === form.id}
                       taken={isTaken(examLog, form.id, form.name)}
                       entry={takenEntry(examLog, form.id, form.name)}
-                      {...rowProps}
-                    />
+                      {...rowProps} />
                   ))}
                 </div>
+              )}
+              {nextBlock && nextForms.length === 0 && !blockForms.length && (
+                <div className="sam-empty">No mapped SA forms for upcoming {nextBlock.label}. Check All Forms tab.</div>
               )}
             </>
           )}

@@ -279,6 +279,7 @@ body { background: #0F172A; color: #F8FAFC; min-height: 100vh; }
 .pop-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
 .pop-btn.full { width: 100%; text-align: left; }
 .pop-err { font-size: 0.75rem; color: #EF4444; }
+.pop-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    WORLD BODY
@@ -2084,4 +2085,92 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* Today highlight */
 .dr-today { box-shadow: 0 0 0 1.5px var(--accent); z-index: 1; }
 .dr-today.dr-m-unset { color: rgba(255,255,255,0.5); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GOOGLE CALENDAR SYNC  (GCalSync.jsx — inside SettingsPopover)
+   ══════════════════════════════════════════════════════════════════════════════ */
+.gcal-panel { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.gcal-header { display: flex; align-items: center; gap: 8px; }
+.gcal-icon   { width: 16px; height: 16px; color: #4285F4; flex-shrink: 0; }
+.gcal-title  { font-size: 0.78rem; font-weight: 700; color: #F8FAFC; }
+.gcal-badge-connected {
+  margin-left: auto; font-size: 0.58rem; font-weight: 800; padding: 2px 8px;
+  border-radius: 8px; background: rgba(16,185,129,0.15); color: #34d399;
+  border: 1px solid rgba(16,185,129,0.3); text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.gcal-what { font-size: 0.68rem; color: #94A3B8; line-height: 1.55; }
+.gcal-what strong { color: #cbd5e1; }
+
+/* Setup steps */
+.gcal-setup       { display: flex; flex-direction: column; gap: 8px; }
+.gcal-setup-title { font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+                    letter-spacing: 0.1em; color: #94A3B8; }
+.gcal-steps { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+.gcal-steps li { font-size: 0.68rem; color: #94A3B8; line-height: 1.5; }
+.gcal-steps li strong { color: #cbd5e1; }
+.gcal-uri {
+  display: block; margin-top: 4px; padding: 5px 8px; background: rgba(0,0,0,0.35);
+  border: 1px solid #2b3a52; border-radius: 5px; font-size: 0.62rem; font-family: monospace;
+  color: #10B981; word-break: break-all; user-select: all;
+}
+
+.gcal-row { display: flex; gap: 6px; }
+.gcal-input {
+  flex: 1; padding: 7px 10px; background: rgba(0,0,0,0.3); border: 1px solid #2b3a52;
+  border-radius: var(--radius-sm); color: #F8FAFC; font-size: 0.7rem; font-family: monospace;
+  min-width: 0;
+}
+.gcal-input:focus { outline: none; border-color: #4285F4; }
+.gcal-btn-save {
+  padding: 7px 12px; background: rgba(66,133,244,0.15); border: 1px solid rgba(66,133,244,0.4);
+  border-radius: var(--radius-sm); color: #7aa7f5; font-size: 0.72rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+.gcal-btn-save:hover:not(:disabled) { background: rgba(66,133,244,0.25); }
+.gcal-btn-save:disabled { opacity: 0.4; cursor: default; }
+
+.gcal-btn-connect {
+  width: 100%; padding: 9px 14px; background: #4285F4; border: none;
+  border-radius: var(--radius-sm); color: #fff; font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: background 0.12s; text-align: center;
+}
+.gcal-btn-connect:hover:not(:disabled) { background: #3367d6; }
+.gcal-btn-connect:disabled { opacity: 0.6; cursor: default; }
+
+/* Connected body */
+.gcal-connected-body { display: flex; flex-direction: column; gap: 8px; }
+.gcal-last-sync { font-size: 0.62rem; color: #64748b; font-family: var(--font-mono); }
+.gcal-actions   { display: flex; gap: 6px; }
+
+.gcal-btn-sync {
+  flex: 1; padding: 8px 12px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35);
+  border-radius: var(--radius-sm); color: #34d399; font-size: 0.72rem; font-weight: 700;
+  cursor: pointer; transition: all 0.12s;
+}
+.gcal-btn-sync:hover:not(:disabled) { background: rgba(16,185,129,0.22); border-color: rgba(16,185,129,0.55); }
+.gcal-btn-sync:disabled { opacity: 0.5; cursor: default; }
+
+.gcal-btn-disconnect {
+  padding: 8px 12px; background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm); color: #64748b; font-size: 0.7rem; font-weight: 600;
+  cursor: pointer; transition: all 0.12s;
+}
+.gcal-btn-disconnect:hover { border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+.gcal-setup-link {
+  background: none; border: none; color: #475569; font-size: 0.62rem; cursor: pointer;
+  text-align: left; padding: 0; text-decoration: underline;
+}
+.gcal-setup-link:hover { color: #94a3b8; }
+
+/* Status messages */
+.gcal-msg { font-size: 0.68rem; line-height: 1.5; padding: 7px 10px;
+            border-radius: var(--radius-sm); border: 1px solid transparent; }
+.gcal-msg-syncing    { background: rgba(66,133,244,0.1);  color: #7aa7f5; border-color: rgba(66,133,244,0.25); }
+.gcal-msg-done       { background: rgba(16,185,129,0.1);  color: #34d399; border-color: rgba(16,185,129,0.25); }
+.gcal-msg-error      { background: rgba(239,68,68,0.1);   color: #f87171; border-color: rgba(239,68,68,0.25); }
+.gcal-msg-connecting { background: rgba(66,133,244,0.08); color: #94a3b8; border-color: rgba(66,133,244,0.2); }
+
 

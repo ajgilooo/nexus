@@ -1,15 +1,17 @@
 // src/App.jsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useApp } from './state/appStore.jsx';
 import { Store, setToken } from './lib/storage.js';
+import { handleOAuthCallback } from './lib/gcal.js';
 import MediWorld from './components/medi/MediWorld.jsx';
 import KinetixWorld from './components/kinetix/KinetixWorld.jsx';
 import TodayWorld from './components/today/TodayWorld.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
+import GCalSync from './components/GCalSync.jsx';
 
 function SettingsPopover({ onClose, doc, commit }) {
   const [tokenInput, setTokenInput] = useState(localStorage.getItem('nexus_token') || '');
-  const [importErr, setImportErr] = useState('');
+  const [importErr, setImportErr]   = useState('');
   const fileRef = useRef();
 
   function saveToken() {
@@ -75,6 +77,9 @@ function SettingsPopover({ onClose, doc, commit }) {
           <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
           {importErr && <p className="pop-err">{importErr}</p>}
         </div>
+
+        <div className="pop-divider" />
+        <GCalSync doc={doc} />
       </div>
     </div>
   );
@@ -85,6 +90,14 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [mediTab, setMediTab]       = useState('tracker');
   const [kinetixTab, setKinetixTab] = useState('plan');
+  const [gcalJustConnected, setGcalJustConnected] = useState(false);
+
+  // Handle Google OAuth redirect-back on app startup
+  useEffect(() => {
+    handleOAuthCallback().then(ok => {
+      if (ok) { setGcalJustConnected(true); setShowSettings(true); }
+    });
+  }, []);
 
   function navigateTo(targetWorld, tab) {
     setWorld(targetWorld);

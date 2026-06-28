@@ -2,7 +2,7 @@
 // Week planner kanban: drag Kinetix sessions + Medi study blocks onto day columns,
 // then push the whole week to Google Calendar as timed events.
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { W } from '../lib/kinetix.data.js';
 import { isConnected, syncKanbanWeek } from '../lib/gcal.js';
 
@@ -55,18 +55,17 @@ const MEDI_CFG = {
   off:  { title:'Study · OFF',  desc:'20 fresh + 10 resurface Qs', dur:90,  hr:8,  cid:'11', col:'#94A3B8' },
 };
 
-function uid() { return Math.random().toString(36).slice(2, 8); }
-
+// IDs are deterministic — same week always produces the same IDs.
+// This lets us compute the board synchronously without ever needing a useEffect commit.
 function generateBoard(weekStr, dutyRoster) {
   const days = weekDays(weekStr);
 
-  // Kinetix cards from W[] for this Monday
   const kxIdx = W.findIndex(w => w.d === weekStr);
   const kxCards = kxIdx >= 0
     ? (W[kxIdx].mods || []).map((mod, i) => {
         const cfg = KX_CFG[mod.t] || { title: mod.t, dur: 60, hr: 6, cid: '11', col: '#94A3B8' };
         return {
-          id: `kx_${weekStr}_${i}_${uid()}`,
+          id: `kx_${weekStr}_${i}`,
           source: 'kinetix', tag: mod.t,
           title: cfg.title,
           desc: mod.tx.slice(0, 100),
@@ -75,14 +74,13 @@ function generateBoard(weekStr, dutyRoster) {
       })
     : [];
 
-  // Medi duty cards for each day of this week
   const mediCards = days.flatMap(ds => {
     const mode = dutyRoster[ds];
     if (!mode || !MEDI_CFG[mode]) return [];
     const cfg = MEDI_CFG[mode];
-    const dn  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(ds + 'T00:00:00').getDay()];
+    const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(ds + 'T00:00:00').getDay()];
     return [{
-      id: `medi_${ds}_${uid()}`,
+      id: `medi_${ds}`,
       source: 'medi', tag: mode,
       title: cfg.title,
       desc: `${dn} · ${cfg.desc}`,
@@ -160,15 +158,10 @@ export default function KanbanBoard({ doc, commit }) {
   const [pushMsg,      setPushMsg]      = useState('');
 
   const boards = doc.kanban?.boards || {};
-  const board  = boards[weekStr];
-
-  useEffect(() => {
-    if (!boards[weekStr]) {
-      const roster = doc.medi?.state?.dutyRoster || {};
-      const nb = generateBoard(weekStr, roster);
-      commit({ ...doc, kanban: { boards: { ...boards, [weekStr]: nb } } });
-    }
-  }, [weekStr]); // eslint-disable-line
+  const roster = doc.medi?.state?.dutyRoster || {};
+  // Compute board synchronously — no effect needed. If the week isn't saved yet,
+  // generate it on the fly. It only gets persisted to doc on the first moveCard call.
+  const board = boards[weekStr] ?? generateBoard(weekStr, roster);
 
   const days = weekDays(weekStr);
 
@@ -177,7 +170,6 @@ export default function KanbanBoard({ doc, commit }) {
   }
 
   function moveCard(cardId, fromCol, toCol, beforeId) {
-    if (!board) return;
     const cols = {
       palette: [...board.palette],
       ...Object.fromEntries(days.map(d => [d, [...(board.days[d] || [])]])),
@@ -204,7 +196,6 @@ export default function KanbanBoard({ doc, commit }) {
       setPushMsg('Connect Google Calendar first — open Settings.');
       return;
     }
-    if (!board) return;
     setPushStatus('pushing');
     setPushMsg('Starting…');
     try {
@@ -248,14 +239,6 @@ export default function KanbanBoard({ doc, commit }) {
     setDragging(null);
     setDropTarget(null);
     setInsertBefore(null);
-  }
-
-  if (!board) {
-    return (
-      <div className="kb-view">
-        <div className="kb-loading">Generating week…</div>
-      </div>
-    );
   }
 
   const colProps = { dragging, insertBefore, onColDragOver, onColDragLeave, onColDrop, onCardDragStart, onDragEnd, onCardDragOver };
